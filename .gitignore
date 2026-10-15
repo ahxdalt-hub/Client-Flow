@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 devserver*.log
+build.log
+
+# dataset build artifacts
+/dist

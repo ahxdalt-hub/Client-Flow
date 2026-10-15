@@ -1,0 +1,9 @@
+store_name,store_url,country_or_market,store_category,public_contact_page_url,research_date,opportunity_notes,research_status,source_reference,qc_notes
+Example Home Goods,https://example-home-goods.example,IN,Home & garden,https://example-home-goods.example/pages/contact,2026-09-12,Mobile menu missing collections links,to-review,internal:fixture/note-001,Fictional fixture record — not a real store
+Sample Skincare Co.,https://sample-skincare.example,US,Beauty,/pages/help,2026-09-12,No size or routine guide on product page,reviewed,internal:fixture/note-002,Fictional fixture record — not a real store
+Demo Fitness Store,https://demo-fitness.example,UK,Fitness,/contact,2026-09-13,Blog present but unlinked from navigation,queued,internal:fixture/note-003,Fictional fixture record — not a real store
+Placeholder Pet Supply,https://placeholder-pets.example,CA,Pets,/pages/contact-us,2026-09-13,Collection page lacks filtering,to-review,internal:fixture/note-004,Fictional fixture record — not a real store
+Illustrative Coffee Brand,https://illustrative-coffee.example,AU,Food & drink,/pages/about,2026-09-14,No email signup on thank-you page,reviewed,internal:fixture/note-005,Fictional fixture record — not a real store
+Fictional Stationery Shop,https://fictional-stationery.example,DE,Stationery,/pages/kontakt,2026-09-14,Product images below common size guidelines,queued,internal:fixture/note-006,Fictional fixture record — not a real store
+Made-up Outdoor Gear,https://madeup-outdoor.example,US,Outdoor,/pages/contact,15 Sep 2026,No shipping FAQ linked near add-to-cart,to-review,internal:fixture/note-007,Fictional fixture — demonstrates date normalisation
+Hypothetical Baby Boutique,https://hypothetical-baby.example,NZ,Baby & nursery,/pages/contact,2026-09-15,No size guide linked from product page,reviewed,internal:fixture/note-008,Fictional fixture record — not a real store
