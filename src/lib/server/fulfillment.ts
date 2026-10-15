@@ -2,37 +2,37 @@ import "server-only";
 
 import { PRODUCT } from "@/config/site";
 import { getAdminClient } from "@/lib/server/db";
+import type {
+  ActiveEntitlement,
+  CapturedPaymentInput,
+  MarkPaidResult,
+  ProductVersionRecord,
+} from "@/lib/server/fulfillment-types";
+
+export type {
+  ActiveEntitlement,
+  CapturedPaymentInput,
+  MarkPaidResult,
+  ProductVersionRecord,
+};
 
 const PROVIDER = "razorpay";
 
 export const EXPECTED_AMOUNT_PAISE = PRODUCT.priceInr * 100;
 export const EXPECTED_CURRENCY = "INR";
 
-export type CapturedPaymentInput = {
-  providerOrderId: string;
-  providerPaymentId: string;
-  amountPaise: number;
-  currency: string;
-  productId: string;
-  paidAtIso: string;
-};
-
-export type MarkPaidResult =
-  | {
-      ok: true;
-      orderId: string;
-      entitlementId: string;
-      /** True only the first time this payment is fulfilled. */
-      firstFulfillment: boolean;
-    }
-  | {
-      ok: false;
-      reason: "amount_mismatch" | "currency_mismatch" | "database_error";
-      detail?: string;
-    };
-
 function isUniqueViolation(error: { code?: string } | null): boolean {
   return error?.code === "23505";
+}
+
+/** True for errors that mean the product_versions migration is not applied. */
+function isMissingRelation(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === "PGRST205" || error.code === "42P01" || error.code === "42703") {
+    return true;
+  }
+  const message = (error.message ?? "").toLowerCase();
+  return message.includes("product_versions") || message.includes("product_version_id");
 }
 
 async function loadOrderByPaymentId(
@@ -63,6 +63,59 @@ async function loadOrderByProviderOrderId(
     .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+/**
+ * Loads the current product version row. Returns null when the
+ * `product_versions` migration has not been applied — fulfillment then simply
+ * leaves the entitlement unpinned and delivery uses the default file paths.
+ */
+async function loadCurrentProductVersionId(
+  productId: string,
+): Promise<string | null> {
+  const supabase = getAdminClient();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("product_versions")
+    .select("id, version, is_current")
+    .eq("product_id", productId)
+    .eq("is_current", true)
+    .maybeSingle();
+  if (error) {
+    if (isMissingRelation(error)) return null;
+    throw error;
+  }
+  return data?.id ?? null;
+}
+
+/**
+ * Loads one product version by id (used by download delivery to resolve the
+ * exact files a customer's entitlement covers). Null when unknown or when the
+ * migration is not applied.
+ */
+export async function getProductVersionById(
+  versionId: string,
+): Promise<ProductVersionRecord | null> {
+  const supabase = getAdminClient();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("product_versions")
+    .select("id, product_id, version, csv_path, xlsx_path, record_count")
+    .eq("id", versionId)
+    .maybeSingle();
+  if (error) {
+    if (isMissingRelation(error)) return null;
+    throw error;
+  }
+  if (!data) return null;
+  return {
+    id: data.id,
+    productId: data.product_id,
+    version: data.version,
+    csvPath: data.csv_path,
+    xlsxPath: data.xlsx_path,
+    recordCount: data.record_count ?? null,
+  };
 }
 
 /**
@@ -154,16 +207,23 @@ export async function markPaymentCaptured(
 
   // Grant (or reuse) the entitlement. `ignoreDuplicates` + unique order_id
   // guarantee a single entitlement row per order no matter how often
-  // markPaymentCaptured runs.
+  // markPaymentCaptured runs. When the product_versions table exists the
+  // entitlement is pinned to the current version so later revisions cannot
+  // change what this customer receives.
+  const versionId = await loadCurrentProductVersionId(input.productId);
+  const entitlementRow: {
+    order_id: string;
+    product_id: string;
+    product_version_id?: string;
+  } = {
+    order_id: orderId,
+    product_id: input.productId,
+  };
+  if (versionId) entitlementRow.product_version_id = versionId;
+
   const upsert = await supabase
     .from("entitlements")
-    .upsert(
-      {
-        order_id: orderId,
-        product_id: input.productId,
-      },
-      { onConflict: "order_id", ignoreDuplicates: true },
-    )
+    .upsert(entitlementRow, { onConflict: "order_id", ignoreDuplicates: true })
     .select("id");
 
   if (upsert.error) {
@@ -234,13 +294,6 @@ export async function revokeEntitlementForPayment(
     .is("revoked_at", null);
 }
 
-export type ActiveEntitlement = {
-  entitlementId: string;
-  orderId: string;
-  productId: string;
-  paymentId: string;
-};
-
 /** Looks up a non-revoked entitlement for a verified payment id. */
 export async function getActiveEntitlementByPaymentId(
   providerPaymentId: string,
@@ -250,7 +303,7 @@ export async function getActiveEntitlementByPaymentId(
   const { data, error } = await supabase
     .from("entitlements")
     .select(
-      "id, product_id, revoked_at, orders!inner ( id, provider_payment_id )",
+      "id, product_id, product_version_id, revoked_at, orders!inner ( id, provider_payment_id )",
     )
     .eq("revoked_at", null)
     .eq("orders.provider", PROVIDER)
@@ -264,6 +317,7 @@ export async function getActiveEntitlementByPaymentId(
     orderId: order.id,
     productId: data.product_id,
     paymentId: order.provider_payment_id,
+    productVersionId: data.product_version_id ?? null,
   };
 }
 

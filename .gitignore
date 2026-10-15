@@ -45,3 +45,6 @@ build.log
 
 # dataset build artifacts
 /dist
+
+# supabase cli local state
+/supabase/.temp/

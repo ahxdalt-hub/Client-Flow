@@ -98,7 +98,10 @@ describe("parseResearchDate", () => {
 
 describe("validateDataset", () => {
   it("accepts a clean file and reports row counts", () => {
-    const { report, rows } = validateRows([{}, { store_name: "Second Store" }]);
+    const { report, rows } = validateRows([
+      {},
+      { store_name: "Second Store", store_url: "https://second-store.example" },
+    ]);
     assert.equal(report.rowCounts.total, 2);
     assert.equal(report.rowCounts.valid, 2);
     assert.equal(report.rowCounts.invalid, 0);
@@ -186,7 +189,10 @@ describe("validateDataset", () => {
     const { report } = validateDataset(table, { source: "missing-columns" });
     assert.ok(report.columns.missingRequired.includes("research_date"));
     assert.ok(report.errors.some((issue) => issue.code === "missing_column"));
-    assert.equal(report.rowCounts.total, 0);
+    // The data row still counts, but nothing can be exported without the
+    // full schema.
+    assert.equal(report.rowCounts.total, 1);
+    assert.equal(report.rowCounts.valid, 0);
   });
 
   it("warns on unknown columns without failing rows", () => {
@@ -210,7 +216,7 @@ describe("validateDataset", () => {
   it("marks rows as invalid when any error exists on the line", () => {
     const { rows } = validateRows([
       { research_status: "bogus" },
-      {},
+      { store_url: "https://second-store.example" },
     ]);
     assert.equal(rows.length, 1);
     assert.equal(rows[0]?.line, 3);

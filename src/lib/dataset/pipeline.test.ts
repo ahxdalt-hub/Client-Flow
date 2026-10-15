@@ -131,8 +131,10 @@ describe("dataset pipeline exports", () => {
 
       assert.equal(result.report.duplicates.storeUrlCount, 1);
       assert.equal(result.report.missingFields.store_url, 1);
-      assert.equal(result.report.rowCounts.valid, 1);
-      assert.equal(result.report.rowCounts.invalid, 2);
+      // Every row involved in a duplicate (and the row with a missing field)
+      // is invalidated — only a human picks which duplicate survives.
+      assert.equal(result.report.rowCounts.valid, 0);
+      assert.equal(result.report.rowCounts.invalid, 3);
       assert.ok(result.report.errors.some((issue) => issue.code === "duplicate_store_url"));
       assert.ok(result.report.errors.some((issue) => issue.code === "missing_field"));
 

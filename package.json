@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test src/lib/server/payment-crypto.test.ts"
+    "dataset": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/dataset/run.mts",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/test/register.mjs --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",

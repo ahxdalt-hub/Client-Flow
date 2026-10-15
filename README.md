@@ -21,7 +21,9 @@ cp .env.example .env.local   # then fill in the values (see below)
 npm run dev      # http://localhost:3000
 npm run lint
 npm run build && npm start
-npm test         # unit tests for payment crypto (signatures, tokens)
+npm test         # full unit suite (dataset pipeline, payment crypto,
+                 # fulfillment, webhook/download/verify routes)
+npm run dataset -- --input <research.csv>   # validate + export (docs/dataset-pipeline.md)
 ```
 
 ## Rename the brand / change configuration
@@ -31,8 +33,11 @@ Everything brand-, price-, navigation-, and product-specific lives in
 
 - `SITE` — name, owner, canonical URL, nav, contact email
 - `CHECKOUT` — payment provider (Razorpay is selected; see env gating below)
-- `PRODUCT` — id, price, formats, and product content fields
+- `PRODUCT` — id, price, formats, released version (`null` until real),
+  storage/licensing notes, and product content fields
 - `PRODUCT_FILES` — object-storage paths of the paid files (server-side only)
+- `LAUNCH_BLOCKERS` — pre-launch blockers tracked in config (real dataset,
+  E2E payment test, legal review, support email placeholder)
 - `CTA` — primary/secondary button labels
 
 Unfinalised product specifications are `null` on purpose and render as
@@ -59,6 +64,13 @@ NEXT_PUBLIC_SITE_URL="https://market-loom-mu.vercel.app"
 | `/success`  | Purchase confirmation, verification-gated downloads |
 | `/sitemap.xml`, `/robots.txt`, `/opengraph-image` | SEO |
 
+## Documentation
+
+- `docs/dataset-pipeline.md` — validating research data, export formats,
+  release flow (`npm run dataset`)
+- `docs/storage.md` — private bucket layout, product versions, entitlement
+  pinning, download delivery states, migration verification
+
 ## Payments & delivery architecture
 
 Provider: **Razorpay** (hosted checkout modal — card data never touches this
@@ -79,12 +91,13 @@ GET /api/verify  ◄── fetch payment from Razorpay API ──┘
       │  (captured? amount ₹199? currency INR?)
       ▼
 markPaymentCaptured()  ← idempotent: unique payment id + one entitlement/order
-      │
+      │                        entitlement pinned to the current product_versions row
       ▼
 HMAC download token (15 min) ──GET /api/download?token=…──►
       │  entitlement re-checked + rate-limited + audited
       ▼
-Supabase signed URLs (10 min) for files in the private bucket
+Supabase signed URLs (10 min) for the pinned version's files
+      (unpinned entitlements fall back to PRODUCT_FILES)
 ```
 
 ### Security invariants
@@ -104,6 +117,11 @@ Supabase signed URLs (10 min) for files in the private bucket
 - **Entitlements**: created only server-side from verified payment data —
   never from a success-page visit, query parameter, or client claim.
   Refund webhooks revoke the entitlement immediately.
+- **Version pinning**: at fulfillment, each entitlement is pinned to the
+  `product_versions` row that was `is_current` at payment time. Files are
+  resolved from that row's `csv_path`/`xlsx_path`, so a future dataset
+  release (uploaded at a new `marketloom/v2/…` path) never changes what an
+  existing customer already bought.
 - **Expiring download links**: `/api/verify` issues an HMAC-signed token
   (15 minutes, bound to the payment id). `/api/download` validates the
   token, re-checks the entitlement in the database, rate-limits issuance
@@ -126,15 +144,19 @@ Supabase signed URLs (10 min) for files in the private bucket
 
 ### Database schema
 
-Migration: `supabase/migrations/20261014000001_orders_entitlements.sql`
+Migrations (apply in order):
+
+1. `supabase/migrations/20261014000001_orders_entitlements.sql`
+2. `supabase/migrations/20261015000001_product_versions.sql`
 
 | Table             | Purpose                                                    |
 | ----------------- | ---------------------------------------------------------- |
 | `orders`          | One row per checkout/payment: internal id, provider order & payment refs, product id, status (`created`/`paid`/`failed`/`refunded`), amount (paise), currency, timestamps |
-| `entitlements`    | One row per paid order: links the order to its downloadable product; `revoked_at` for refunds |
+| `entitlements`    | One row per paid order: links the order to its downloadable product and pinned `product_version_id`; `revoked_at` for refunds |
 | `download_events` | Minimal audit of signed-link issuance (rate limiting)      |
+| `product_versions`| One row per released dataset version: storage paths, record count, `is_current` (partial unique index enforces one current version per product) |
 
-RLS is enabled on all three tables with **no policies** — only the
+RLS is enabled on all four tables with **no policies** — only the
 service-role key (server-side) can touch them.
 
 ## Configuration requirements
@@ -179,27 +201,31 @@ secrets are never invented or faked.
 1. Create a project; copy **Project Settings → Data API → URL** →
    `SUPABASE_URL` and **API keys → service_role** →
    `SUPABASE_SERVICE_ROLE_KEY` (keep secret).
-2. Apply the migration: paste
-   `supabase/migrations/20261014000001_orders_entitlements.sql` into the SQL
-   editor and run it (or `supabase db push` with the CLI linked).
+2. Apply **both** migrations, in order: paste
+   `supabase/migrations/20261014000001_orders_entitlements.sql` and then
+   `supabase/migrations/20261015000001_product_versions.sql` into the SQL
+   editor (or `supabase db push` with the CLI linked).
 3. Storage → create a **private** bucket named `product-downloads`.
-4. Upload the product files with these exact paths (configurable in
-   `PRODUCT_FILES` in `src/config/site.ts`):
-   - `research-pack/marketloom-research-pack.csv`
-   - `research-pack/marketloom-research-pack.xlsx`
+4. Produce the real product files with the dataset pipeline
+   (see `docs/dataset-pipeline.md`), then upload them at these exact
+   versioned paths (mirrored by `PRODUCT_FILES` in `src/config/site.ts`):
+   - `marketloom/v1/marketloom-shopify-research-v1.csv`
+   - `marketloom/v1/marketloom-shopify-research-v1.xlsx`
+   and register the release with a `product_versions` row
+   (`docs/storage.md` has the SQL). Future dataset revisions go to
+   **new** paths (`marketloom/v2/…`) — never overwrite an existing version.
 5. Do **not** set the bucket to public and do **not** add public policies —
    the only access path is the service-role signed-URL flow.
-6. For local development you may upload clearly-labelled sample files (e.g.
-   a CSV with the sample columns and a placeholder row) — never fabricate
-   unfinished data as the real paid product, and never include real personal
-   data.
+6. For local development you may upload clearly-labelled sample files at a
+   non-release path — never fabricate unfinished data as the real paid
+   product, and never include real personal data.
 
 ## Testing with Razorpay test mode
 
 No part of this codebase simulates a successful payment. To test end to end:
 
-1. Use Test Mode keys in `.env.local` and apply the Supabase migration;
-   upload sample files to the private bucket.
+1. Use Test Mode keys in `.env.local` and apply both Supabase migrations;
+   upload the versioned product files to the private bucket.
 2. Point the Razorpay webhook at your tunnel URL (or use dashboard test
    webhook triggers).
 3. Click the purchase button → Razorpay test modal opens → pay with a test
@@ -218,8 +244,11 @@ No part of this codebase simulates a successful payment. To test end to end:
      still exactly one order and one entitlement.
    - **Unpaid access**: call `/api/download` without a token, with a forged
      token, or with a valid token for a non-existent payment → 400/401/403.
-5. Unit tests: `npm test` covers webhook signature validation and download
-   token round-trips, tampering, and expiry.
+5. Unit tests: `npm test` runs the full suite — dataset pipeline
+   validation/exports, webhook signature validation, download token
+   round-trips/tampering/expiry, idempotent fulfillment + version pinning,
+   and the verify/webhook/download route handlers against in-memory
+   Supabase fakes.
 
 ## What requires external configuration (not verifiable here)
 
@@ -268,6 +297,7 @@ Before going live:
 2. Mark legal-review items resolved (privacy/terms/refunds pages are
    explicitly flagged).
 3. Confirm final product specifications in `src/config/site.ts`.
-4. Apply the Supabase migration, upload the real product files to the
-   private bucket, and run the full test-mode checklist above.
+4. Apply both Supabase migrations, produce and upload the real product
+   files (dataset pipeline → versioned bucket paths → `product_versions`
+   row), and run the full test-mode checklist above.
 5. Switch Razorpay to Live Mode keys and update env vars.

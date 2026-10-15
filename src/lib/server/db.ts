@@ -22,6 +22,7 @@ export type EntitlementRow = {
   id: string;
   order_id: string;
   product_id: string;
+  product_version_id: string | null;
   granted_at: string;
   revoked_at: string | null;
 };
@@ -52,4 +53,12 @@ export function getAdminClient(): SupabaseClient | null {
     },
   });
   return adminClient;
+}
+
+/**
+ * Test-only override for the service-role client (used by the in-memory fake
+ * in `src/test-support`). Never call this from application code.
+ */
+export function __setAdminClientForTests(client: SupabaseClient | null): void {
+  adminClient = client;
 }

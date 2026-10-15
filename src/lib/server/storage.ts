@@ -2,11 +2,17 @@ import "server-only";
 
 import { PRODUCT_FILES } from "@/config/site";
 import { getAdminClient } from "@/lib/server/db";
+import { getProductVersionById } from "@/lib/server/fulfillment";
 
 export const DOWNLOAD_BUCKET = "product-downloads";
 
 /** Signed Supabase Storage URLs live for 10 minutes. */
 export const SIGNED_URL_TTL_SECONDS = 600;
+
+export type ProductFileRef = {
+  name: string;
+  path: string;
+};
 
 export type SignedProductFile = {
   name: string;
@@ -29,11 +35,34 @@ export class StorageFileMissingError extends Error {
 }
 
 /**
- * Creates short-lived signed URLs for the configured product files in the
- * private `product-downloads` bucket. Paths come from server-side config
- * only — never from request input.
+ * Resolves the files an entitlement is allowed to receive.
+ *
+ * - Entitlements pinned to a `product_versions` row resolve that version's
+ *   paths (the customer keeps the version they paid for).
+ * - Unpinned entitlements — or a version row that no longer exists — fall back
+ *   to the default `PRODUCT_FILES` paths. Request input can never influence
+ *   this choice.
  */
-export async function createProductSignedUrls(): Promise<{
+export async function filesForEntitlement(
+  productVersionId: string | null,
+): Promise<readonly ProductFileRef[]> {
+  if (!productVersionId) return PRODUCT_FILES;
+  const version = await getProductVersionById(productVersionId);
+  if (!version) return PRODUCT_FILES;
+  return [
+    { name: "Marketloom Research Pack (CSV)", path: version.csvPath },
+    { name: "Marketloom Research Pack (XLSX)", path: version.xlsxPath },
+  ];
+}
+
+/**
+ * Creates short-lived signed URLs for the given product files in the private
+ * `product-downloads` bucket. Paths come from server-side config or the
+ * entitlement's pinned version — never from request input.
+ */
+export async function createProductSignedUrls(
+  files: readonly ProductFileRef[] = PRODUCT_FILES,
+): Promise<{
   ok: true;
   files: SignedProductFile[];
   expiresAt: string;
@@ -48,8 +77,8 @@ export async function createProductSignedUrls(): Promise<{
     Date.now() + SIGNED_URL_TTL_SECONDS * 1000,
   ).toISOString();
 
-  const files: SignedProductFile[] = [];
-  for (const file of PRODUCT_FILES) {
+  const signedFiles: SignedProductFile[] = [];
+  for (const file of files) {
     const { data, error } = await supabase.storage
       .from(DOWNLOAD_BUCKET)
       .createSignedUrl(file.path, SIGNED_URL_TTL_SECONDS);
@@ -61,8 +90,8 @@ export async function createProductSignedUrls(): Promise<{
       console.error("[storage] signed URL failed:", error.message);
       return { ok: false, reason: "storage_error" };
     }
-    files.push({ name: file.name, url: data.signedUrl, expiresAt });
+    signedFiles.push({ name: file.name, url: data.signedUrl, expiresAt });
   }
 
-  return { ok: true, files, expiresAt };
+  return { ok: true, files: signedFiles, expiresAt };
 }

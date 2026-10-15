@@ -149,7 +149,8 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (!parsed.input) {
+  const input = parsed.input;
+  if (!input) {
     console.error("Error: --input is required\n");
     console.error(
       "Usage: node scripts/dataset/run.ts --input <file.csv> [--out-dir <dir>] [--prefix <name>]\n" +
@@ -161,7 +162,7 @@ async function main(): Promise<void> {
 
   try {
     const result = await runDatasetPipeline({
-      input: path.resolve(parsed.input),
+      input: path.resolve(input),
       outDir: path.resolve(parsed.outDir),
       prefix: parsed.prefix,
       fixtureData: parsed.fixture,
