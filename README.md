@@ -43,7 +43,7 @@ Set the canonical site URL for SEO via environment variable:
 
 ```bash
 # .env.local
-NEXT_PUBLIC_SITE_URL="https://market-loom.vercel.app"
+NEXT_PUBLIC_SITE_URL="https://market-loom-mu.vercel.app"
 ```
 
 ## Page map
@@ -165,7 +165,7 @@ secrets are never invented or faked.
 2. Start in **Test Mode** (toggle in the dashboard header).
 3. Copy the Test **Key Id** and **Key Secret** into the env vars.
 4. Settings → **Webhooks** → create a webhook:
-   - URL: `https://market-loom.vercel.app/api/webhooks/razorpay`
+   - URL: `https://market-loom-mu.vercel.app/api/webhooks/razorpay`
    - Secret: create a strong random string → `RAZORPAY_WEBHOOK_SECRET`
    - Active events: `payment.captured`, `payment.failed`, `refund.processed`
 5. For local development, expose your machine with a tunnel (e.g.
@@ -251,7 +251,7 @@ storefront shows the honest pre-launch notice.
 ```bash
 npm run build
 # output via next start, or deploy to Vercel/Netlify
-NEXT_PUBLIC_SITE_URL="https://market-loom.vercel.app" npm run build
+NEXT_PUBLIC_SITE_URL="https://market-loom-mu.vercel.app" npm run build
 ```
 
 Notes:
