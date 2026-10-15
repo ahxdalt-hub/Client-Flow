@@ -1,7 +1,7 @@
 export const SITE = {
   name: "Marketloom",
   owner: "Caelmont",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://market-loom-mu.vercel.app",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://market-loom.vercel.app",
   tagline:
     "Structured Shopify store research for freelancers and agencies.",
   description:
