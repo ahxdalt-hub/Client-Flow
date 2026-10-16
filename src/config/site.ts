@@ -1,5 +1,3 @@
 export const SITE = {
-  name: "Marketloom",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://market-loom-mu.vercel.app",
-  tagline: "New product coming soon.",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
 } as const;

@@ -6,8 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
-  title: SITE.name,
-  description: SITE.tagline,
+  title: "Home",
 };
 
 export default function RootLayout({

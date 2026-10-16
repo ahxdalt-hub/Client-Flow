@@ -1,7 +1,6 @@
-# Marketloom
+# Site
 
-Blank slate. The previous storefront (Shopify store research pack) has been
-removed. Only the MarketLoom name and logo remain.
+Blank slate Next.js app. All previous content and branding has been removed.
 
 ## Stack
 
