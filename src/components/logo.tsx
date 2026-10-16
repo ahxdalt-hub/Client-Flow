@@ -1,32 +1,28 @@
 import { SITE } from "@/config/site";
 
-/**
- * Marketloom mark: a solid shopping bag whose body carries a plain weave
- * cut out in negative space — the market half of the name meets the loom
- * half, as a single monochrome white shape.
- */
-export function LogoMark({ className = "h-7 w-7" }: { className?: string }) {
+export function LogoMark({ className = "h-8 w-8" }: { className?: string }) {
   return (
     <span
       aria-hidden
-      className={`block overflow-hidden rounded-[22%] bg-ink ${className}`}
+      className={`block overflow-hidden rounded-[22%] ${className}`}
+      style={{ background: "#191713" }}
     >
       <svg viewBox="0 0 64 64" fill="none" className="block h-full w-full">
         <path
           d="M23 24 A9 9 0 0 1 41 24"
-          stroke="var(--paper)"
+          stroke="#fbf9f5"
           strokeWidth="5"
           strokeLinecap="round"
         />
         <path
           d="M14 24 H50 L45 50 H19 Z"
-          fill="var(--paper)"
-          stroke="var(--paper)"
+          fill="#fbf9f5"
+          stroke="#fbf9f5"
           strokeWidth="4"
           strokeLinejoin="round"
         />
         <g
-          stroke="var(--ink)"
+          stroke="#191713"
           strokeWidth="3.5"
           strokeLinecap="round"
           fill="none"

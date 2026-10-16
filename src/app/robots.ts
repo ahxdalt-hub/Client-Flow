@@ -7,7 +7,6 @@ export default function robots(): import("next").MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api", "/success"],
     },
     sitemap: `${base}/sitemap.xml`,
   };
