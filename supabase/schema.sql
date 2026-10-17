@@ -68,6 +68,54 @@ alter table public.download_log enable row level security;
 create index if not exists download_log_order_idx
   on public.download_log (order_id, created_at desc);
 
+-- ── Support tickets (/support → /admin/support) ─────────────────────
+-- Written by POST /api/support when a customer submits the ticket form.
+-- Read and updated by the owner-only /admin/support panel.
+--
+-- Personal data held here is deliberately minimal: the email the customer
+-- wants a reply at, their name if they gave one, and the message. No IP
+-- address — only a salted, truncated hash, used for abuse throttling.
+create table if not exists public.support_tickets (
+  id             uuid primary key default gen_random_uuid(),
+  ticket_code    text not null,
+  category       text not null,
+  topic          text not null,
+  subject        text not null,
+  message        text not null,
+  customer_name  text,
+  customer_email text not null,
+  order_code     text,
+  priority       text not null default 'normal'
+                 check (priority in ('urgent','high','normal','low')),
+  status         text not null default 'open'
+                 check (status in ('open','in_progress','waiting','resolved','closed')),
+  admin_note     text,
+  replied_at     timestamptz,
+  source         text not null default 'web',
+  ip_hash        text,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+alter table public.support_tickets enable row level security;
+-- No policies — every read and write goes through the service role, and the
+-- admin panel is gated by the ADMIN_SECRET cookie. Nothing here is public.
+
+create unique index if not exists support_tickets_code_idx
+  on public.support_tickets (ticket_code);
+
+create index if not exists support_tickets_queue_idx
+  on public.support_tickets (status, priority, created_at desc);
+
+create index if not exists support_tickets_category_idx
+  on public.support_tickets (category, created_at desc);
+
+create index if not exists support_tickets_email_idx
+  on public.support_tickets (lower(customer_email));
+
+create index if not exists support_tickets_order_code_idx
+  on public.support_tickets (order_code);
+
 -- After these tables exist, the helpers in src/lib/orders.ts
 -- (logEvent / logDownload) pick them up automatically — no code change.
 

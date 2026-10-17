@@ -66,11 +66,14 @@ export default function RefundPage() {
 
       <h2>How to ask</h2>
       <p>
-        Email <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a> with the
-        subject &ldquo;Refund&rdquo; and your order ref (shown on your order
-        confirmation page). Tell us what you hit — a failed download, a missing
-        file, a double charge. If it&apos;s one of the three cases above, we
-        don&apos;t ask you to justify it any further.
+        Open a ticket at <a href="/support">/support</a> — choose{" "}
+        <em>Refunds</em>, pick the problem, and your order code is attached for
+        you. Prefer email? Write to{" "}
+        <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a> with the subject
+        &ldquo;Refund&rdquo; and your order ref (shown on your order confirmation
+        page). Tell us what you hit — a failed download, a missing file, a double
+        charge. If it&apos;s one of the three cases above, we don&apos;t ask you to
+        justify it any further.
       </p>
 
       <h2>Timing</h2>

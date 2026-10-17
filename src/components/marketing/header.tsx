@@ -14,9 +14,8 @@ const NAV = [
   { href: "/#inside", label: "What's inside" },
   { href: "/sample", label: "Free sample" },
   { href: "/blog", label: "Guides" },
-  { href: "/contact", label: "Support" },
+  { href: "/support", label: "Support" },
 ];
-
 const BUY_LABEL = `Get the kit — ₹${activePrice()}`;
 
 export function Header() {

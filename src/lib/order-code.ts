@@ -11,12 +11,21 @@
 const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 const LENGTH = 6;
 
-export function generateOrderCode(): string {
+function randomCode(prefix: string): string {
   const bytes = new Uint8Array(LENGTH);
   crypto.getRandomValues(bytes);
   let code = "";
   for (const b of bytes) code += ALPHABET[b % ALPHABET.length];
-  return `CF-${code}`;
+  return `${prefix}-${code}`;
+}
+
+export function generateOrderCode(): string {
+  return randomCode("CF");
+}
+
+/** Support ticket reference, e.g. `CFT-7K2M9Q`. Quoted by the customer. */
+export function generateTicketCode(): string {
+  return randomCode("CFT");
 }
 
 /** True for a `CF-XXXXXX` code (case-insensitive). */

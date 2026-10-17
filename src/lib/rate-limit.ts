@@ -18,6 +18,8 @@ export const RATE_LIMITS = {
   track: { limit: 120, windowMs: 10 * 60 * 1000 },
   /** Self-serve download-link recovery: looks up a paid order by Razorpay id. */
   recover: { limit: 20, windowMs: 10 * 60 * 1000 },
+  /** Support ticket submissions: a real person sends one, maybe two. */
+  support: { limit: 6, windowMs: 15 * 60 * 1000 },
   /** Owner-dashboard login: a handful of attempts, then locked out. */
   admin: { limit: 10, windowMs: 10 * 60 * 1000 },
 } as const;

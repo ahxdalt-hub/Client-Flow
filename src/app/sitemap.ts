@@ -25,6 +25,7 @@ const PAGES: {
   { path: "/", lastModified: "2026-10-17", changeFrequency: "weekly", priority: 1 },
   { path: "/sample", lastModified: "2026-10-17", changeFrequency: "monthly", priority: 0.8 },
   { path: "/blog", lastModified: "2026-10-17", changeFrequency: "weekly", priority: 0.7 },
+  { path: "/support", lastModified: "2026-10-17", changeFrequency: "monthly", priority: 0.5 },
   { path: "/faq", lastModified: "2026-10-17", changeFrequency: "monthly", priority: 0.6 },
   { path: "/contact", lastModified: "2026-10-17", changeFrequency: "yearly", priority: 0.4 },
   { path: "/privacy", lastModified: "2026-10-17", changeFrequency: "yearly", priority: 0.3 },

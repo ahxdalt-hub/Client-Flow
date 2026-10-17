@@ -119,7 +119,14 @@ export function RecoverForm() {
 
       <p className="mt-4 text-[0.8rem] leading-relaxed text-muted">
         Don&apos;t have the id? Check the receipt Razorpay emailed you when you
-        paid. Still stuck? Write to{" "}
+        paid. Still stuck?{" "}
+        <a
+          href="/support?topic=cant-find-order-page"
+          className="underline underline-offset-2 hover:text-ink"
+        >
+          Open a support ticket
+        </a>{" "}
+        or write to{" "}
         <a
           href={`mailto:${CONTACT.email}`}
           className="underline underline-offset-2 hover:text-ink"

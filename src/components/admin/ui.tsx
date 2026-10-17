@@ -155,6 +155,43 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="px-4 py-8 text-center text-[0.85rem] text-muted">{children}</p>;
 }
 
+const STATUS_TONES: Record<string, string> = {
+  open: "bg-amber-100 text-amber-800",
+  in_progress: "bg-sky-100 text-sky-800",
+  waiting: "bg-violet-100 text-violet-800",
+  resolved: "bg-accent-tint text-accent",
+  closed: "bg-ivory text-muted border border-line",
+};
+
+/** Ticket lifecycle pill. Falls back to a neutral tone for unknown values. */
+export function TicketStatusPill({ status }: { status: string }) {
+  const tone = STATUS_TONES[status] ?? "bg-ivory text-muted";
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-[0.7rem] font-semibold ${tone}`}>
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+const PRIORITY_TONES: Record<string, string> = {
+  urgent: "bg-red-600 text-white",
+  high: "bg-red-50 text-red-700 border border-red-200",
+  normal: "bg-paper text-muted border border-line",
+  low: "bg-paper text-muted/70 border border-line",
+};
+
+/** Priority pill. `urgent` is deliberately the loudest thing on the page. */
+export function PriorityPill({ priority }: { priority: string }) {
+  const tone = PRIORITY_TONES[priority] ?? "bg-ivory text-muted";
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-wide ${tone}`}
+    >
+      {priority}
+    </span>
+  );
+}
+
 export const inr = (paise: number) =>
   `₹${(paise / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 

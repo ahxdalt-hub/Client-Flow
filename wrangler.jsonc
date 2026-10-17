@@ -6,6 +6,13 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "clientflow" }],
+  "send_email": [
+    {
+      "name": "SEND_EMAIL",
+      "destination_address": "caelmontholdings@gmail.com",
+      "allowed_sender_addresses": ["tickets@caelmont.in"]
+    }
+  ],
   "routes": [{ "pattern": "clientflow.caelmont.in", "custom_domain": true }],
   "workers_dev": true,
   "preview_urls": false,

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Button, Container } from "@/components/ui";
 import { play } from "@/lib/sound";
 import { track } from "@/lib/analytics-client";
-import { CONTACT } from "@/lib/pricing";
 
 type Status = "ready" | "pending" | "invalid";
 
@@ -29,15 +28,23 @@ export function OrderSuccess({
         </h1>
         <p className="mt-4 text-[0.95rem] leading-relaxed text-muted">
           Download links are tied to your order and expire after 30 days. If
-          you just paid and landed here wrongly, or your link has expired,
-          send us your order ref and we&apos;ll sort it out:
+          you just paid and landed here wrongly, or your link has expired, we
+          can reissue it — opening a ticket attaches your order details for you.
         </p>
-        <a
-          href={`mailto:${CONTACT.email}?subject=Download link problem (order ${orderId})`}
-          className="mt-6 inline-flex rounded-full bg-ink px-6 py-3 text-[0.9rem] font-semibold text-ivory btn"
-        >
-          Email support
-        </a>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link
+            href={`/support?order=${encodeURIComponent(code ?? "")}&topic=link-expired`}
+            className="btn inline-flex rounded-full bg-ink px-6 py-3 text-[0.9rem] font-semibold text-ivory"
+          >
+            Open a support ticket
+          </Link>
+          <Link
+            href="/recover"
+            className="btn inline-flex rounded-full border border-line px-6 py-3 text-[0.9rem] font-semibold text-ink"
+          >
+            Recover the link myself
+          </Link>
+        </div>
       </Shell>
     );
   }
@@ -121,12 +128,12 @@ export function OrderSuccess({
           find a lost link
         </Link>{" "}
         ·{" "}
-        <a
-          href={`mailto:${CONTACT.email}?subject=Support (${code})`}
+        <Link
+          href={`/support${code ? `?order=${encodeURIComponent(code)}` : ""}`}
           className="underline underline-offset-2 hover:text-ink"
         >
-          email support
-        </a>
+          open a support ticket
+        </Link>
       </p>
     </Shell>
   );

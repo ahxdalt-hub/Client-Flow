@@ -31,7 +31,21 @@ export const activePrice = () =>
 export const amountInPaise = (rupees: number) => rupees * 100;
 
 export const CONTACT = {
-  email: "support@clientflow.store",
+  /** Public support address — shown on every page, linked from the footer. */
+  email: "caelmontholdings@gmail.com",
+  /**
+   * Where ticket notifications are delivered. Cloudflare Email Routing has this
+   * address verified as a destination for caelmont.in, so the Worker can send
+   * to it directly through the SEND_EMAIL binding — no third-party mail API.
+   */
+  notifyEmail: "caelmontholdings@gmail.com",
+  /**
+   * Envelope sender. Must be an address on a domain with Email Routing enabled
+   * (caelmont.in), and must match `allowed_sender_addresses` in wrangler.jsonc.
+   * The customer's own address goes in Reply-To, so replying just works.
+   */
+  sendFromEmail: "tickets@caelmont.in",
+  sendFromName: "ClientFlow Support",
   business: "ClientFlow",
 } as const;
 
