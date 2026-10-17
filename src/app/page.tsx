@@ -8,8 +8,7 @@ import { Inside } from "@/components/marketing/inside";
 import { LookInside } from "@/components/marketing/look-inside";
 import { PipelineSection } from "@/components/marketing/pipeline-section";
 import { HowItWorks } from "@/components/marketing/how-it-works";
-import { Pricing } from "@/components/marketing/pricing";
-import { FaqSection } from "@/components/marketing/faq";
+import { FaqBackdrop, FaqSection } from "@/components/marketing/faq";
 import { SampleTeaser } from "@/components/marketing/sample-teaser";
 import { CtaBand } from "@/components/marketing/cta-band";
 import { Section, SectionHeading, Container } from "@/components/ui";
@@ -41,7 +40,6 @@ export default function HomePage() {
       <LookInside />
       <PipelineSection />
       <HowItWorks />
-      <Pricing />
 
       {/* Who it's for */}
       <Section ariaLabel="Who this is for" className="border-t border-line">
@@ -93,15 +91,18 @@ export default function HomePage() {
       <SampleTeaser />
 
       {/* FAQ */}
-      <Section ariaLabel="Frequently asked questions" id="faq" className="border-t border-line bg-paper">
-        <Container>
-          <SectionHeading
-            align="center"
-            eyebrow="FAQ"
-            title="Questions, answered plainly."
-          />
-          <div className="mt-12">
-            <FaqSection />
+      <Section
+        ariaLabel="Frequently asked questions"
+        id="faq"
+        className="relative isolate overflow-hidden border-t border-line bg-paper"
+      >
+        <FaqBackdrop />
+        <Container className="relative">
+          <div className="lg:max-w-[34rem]">
+            <SectionHeading eyebrow="FAQ" title="Questions, answered plainly." />
+            <div className="mt-10">
+              <FaqSection tone="glass" />
+            </div>
           </div>
         </Container>
       </Section>

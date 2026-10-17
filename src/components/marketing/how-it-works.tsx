@@ -1,5 +1,8 @@
-import { Reveal, Spotlight } from "../motion";
+import Image from "next/image";
+
+import { Reveal } from "../motion";
 import { Container, Section, SectionHeading } from "../ui";
+import { Grain } from "../art/ambient";
 
 const STEPS = [
   {
@@ -19,6 +22,14 @@ const STEPS = [
   },
 ];
 
+/**
+ * The instruction panel.
+ *
+ * Three steps, written straight onto a photograph of the desk they happen
+ * at. The picture is veiled to ink so the copy keeps its contrast, and two
+ * slow loops keep the band from sitting completely still: a warm glow
+ * drifting behind the words and a light sheen crossing the panel.
+ */
 export function HowItWorks() {
   return (
     <Section ariaLabel="How it works" className="border-t border-line bg-paper">
@@ -28,26 +39,44 @@ export function HowItWorks() {
           align="center"
           title="From download to first send, in one sitting."
         />
-        <ol className="mx-auto mt-14 grid max-w-4xl gap-5 md:grid-cols-3">
-          {STEPS.map((step, i) => (
-            <Reveal key={step.n} delay={i * 130} y={22}>
-              <Spotlight
-                as="li"
-                className="card-lift relative h-full list-none rounded-[var(--radius-card)] border border-line bg-ivory p-6"
-              >
-                <span className="display absolute right-5 top-4 text-[2.4rem] leading-none text-line-strong">
-                  {step.n}
-                </span>
-                <h3 className="mt-2 max-w-[15rem] font-display text-[1.15rem] font-semibold leading-snug text-ink">
-                  {step.title}
-                </h3>
-                <p className="mt-3 text-[0.88rem] leading-relaxed text-muted">
-                  {step.text}
-                </p>
-              </Spotlight>
-            </Reveal>
-          ))}
-        </ol>
+
+        <Reveal delay={120} y={24} className="mt-14">
+          <div className="steps-panel on-ink">
+            <Image
+              src="/images/desk-dark.jpg"
+              alt=""
+              fill
+              sizes="(min-width: 1240px) 1240px, 100vw"
+              className="object-cover object-center opacity-60"
+            />
+            <span className="steps-scrim" />
+            <span className="steps-glow steps-glow--a" />
+            <span className="steps-glow steps-glow--b" />
+            <Grain opacity={0.3} />
+
+            <ol className="steps-track">
+              {STEPS.map((step, i) => (
+                <Reveal
+                  key={step.n}
+                  as="li"
+                  delay={140 + i * 130}
+                  y={20}
+                  className="steps-item list-none"
+                >
+                  <span className="steps-num" aria-hidden="true">
+                    {step.n}
+                  </span>
+                  <h3 className="mt-5 max-w-[17rem] font-display text-[1.18rem] font-semibold leading-snug text-ivory">
+                    {step.title}
+                  </h3>
+                  <p className="mt-3 text-[0.88rem] leading-relaxed text-ivory/65">
+                    {step.text}
+                  </p>
+                </Reveal>
+              ))}
+            </ol>
+          </div>
+        </Reveal>
       </Container>
     </Section>
   );

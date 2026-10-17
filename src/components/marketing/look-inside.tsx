@@ -1,15 +1,23 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
-import { Container, SectionHeading, ButtonLink } from "../ui";
+import { Container, ButtonLink } from "../ui";
+import { Grain } from "../art/ambient";
 import { ScrollGallery } from "../scroll-gallery";
 
 /**
- * "Look inside" — a pinned, scroll-driven horizontal gallery.
+ * "Look inside" — a pinned, scroll-driven horizontal gallery on a dark stage.
  *
  * Each card previews one real file shipped in the kit. Showing the product
  * is the conversion work here: the visitor stops wondering whether ₹299 buys
  * something substantial. Previews are stylised CSS, not screenshots, and
  * every claim maps to product-content.ts.
+ *
+ * The section is the one dark band in the page. Ink makes the paper files
+ * read as objects, a pool of light walks the stage with the strip (driven by
+ * the `--gallery-*` variables <ScrollGallery> writes), and the cards fan into
+ * depth around the middle of the window. All of it is decoration: with the
+ * stage switched off — small screens, reduced motion, no JS — this is a plain
+ * readable strip of files.
  */
 
 function Sheet({ children }: { children: ReactNode }) {
@@ -172,37 +180,98 @@ const FILES: { file: string; label: string; note: string; visual: ReactNode }[] 
   { file: "README.md", label: "Read me first", note: "What each file is and how to use it today.", visual: <ReadmeVisual /> },
 ];
 
+/**
+ * Scenery for the pinned window.
+ *
+ * Decorative only, and every layer reads the CSS variables <ScrollGallery>
+ * writes: the beam slides with the strip, the hairline grid drifts slower
+ * than the cards, the manifest runs along the foot, and the ghost numeral is
+ * the file you are on. The six numerals cross-fade across the progress scale
+ * in pure CSS, so nothing here holds state.
+ */
+function GalleryStage() {
+  const last = FILES.length - 1;
+
+  return (
+    <>
+      <span className="look-cone" />
+      <span className="look-grid" />
+      <span className="look-beam" />
+
+      <span className="look-ribbon">
+        {[0, 1].map((pass) =>
+          FILES.map((item, i) => (
+            <span key={`${pass}-${item.file}`} className="look-ribbon-item">
+              <span className="look-ribbon-num">{String(i + 1).padStart(2, "0")}</span>
+              {item.file}
+            </span>
+          )),
+        )}
+      </span>
+
+      {FILES.map((item, i) => (
+        <span
+          key={item.file}
+          className="look-num"
+          style={{ "--at": (i / last).toFixed(3) } as CSSProperties}
+        >
+          {String(i + 1).padStart(2, "0")}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** The file's extension, as a chip: ClientFlow-Handbook.pdf → PDF. */
+function fileType(file: string) {
+  return file.split(".").pop()?.toUpperCase() ?? "FILE";
+}
+
 export function LookInside() {
   return (
-    <section
-      aria-label="Look inside the kit"
-      className="relative isolate border-t border-line bg-sand"
-    >
-      <Container className="pt-20 md:pt-28">
-        <SectionHeading
-          align="center"
-          eyebrow="Look inside"
-          title={
-            <>
-              Six files.
-              <br />
-              <span className="text-muted">Nothing to assemble.</span>
-            </>
-          }
-          description="This is what lands in your inbox the moment you pay — a designed handbook, editable templates, four proposals and a working tracker. Scroll to walk through every file."
-        />
+    <section aria-label="Look inside the kit" className="on-ink relative isolate border-t border-line">
+      {/* ── Scenery: ink base, warm glows, ivory ramps at both seams ── */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="look-base" />
+        <span className="look-glow look-glow--a" />
+        <span className="look-glow look-glow--b" />
+        <span className="look-glow look-glow--c" />
+        <span className="look-ramp look-ramp--top" />
+        <span className="look-ramp look-ramp--bottom" />
+        <Grain opacity={0.22} />
+      </div>
+
+      <Container className="relative pt-24 md:pt-32">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="eyebrow !text-ivory/45">Look inside</p>
+          <h2 className="display mt-3 text-[clamp(1.9rem,4vw,2.9rem)] text-ivory">
+            Six files.
+            <br />
+            <span className="text-ivory/45">Nothing to assemble.</span>
+          </h2>
+          <p className="mt-4 text-[1.05rem] leading-relaxed text-ivory/60">
+            This is what lands in your inbox the moment you pay — a designed
+            handbook, editable templates, four proposals and a working tracker.
+            Scroll to walk through every file.
+          </p>
+        </div>
       </Container>
 
-      <div className="mt-14">
-        <ScrollGallery>
+      <div className="mt-12">
+        <ScrollGallery stage={<GalleryStage />}>
           {FILES.map((item) => (
-            <article key={item.file} className="w-[19rem] shrink-0 sm:w-[21rem]">
-              <div className="spotlight card-lift flex h-full flex-col rounded-[calc(var(--radius-card)+4px)] border border-line bg-paper p-5 shadow-[var(--shadow-lift)]">
+            <article key={item.file} className="w-[20rem] shrink-0 sm:w-[22rem]">
+              <div className="gallery-card spotlight flex h-full flex-col rounded-[calc(var(--radius-card)+4px)] border border-line bg-paper p-5">
                 <div className="img-frame flex h-[15rem] items-center justify-center bg-sand p-5">
                   {item.visual}
                 </div>
-                <p className="mt-5 font-mono text-[0.7rem] text-muted">{item.file}</p>
-                <h3 className="mt-1.5 font-display text-[1.12rem] font-semibold text-ink">
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <p className="truncate font-mono text-[0.68rem] text-muted">{item.file}</p>
+                  <span className="shrink-0 rounded-full border border-line px-2 py-[0.12rem] text-[0.52rem] font-bold uppercase tracking-[0.12em] text-muted">
+                    {fileType(item.file)}
+                  </span>
+                </div>
+                <h3 className="mt-2 font-display text-[1.12rem] font-semibold text-ink">
                   {item.label}
                 </h3>
                 <p className="mt-1.5 text-[0.84rem] leading-relaxed text-muted">
@@ -212,21 +281,22 @@ export function LookInside() {
             </article>
           ))}
 
-          {/* Closing CTA card */}
-          <article className="w-[19rem] shrink-0 sm:w-[21rem]">
-            <div className="flex h-full flex-col justify-center rounded-[calc(var(--radius-card)+4px)] border border-ink/10 bg-ink p-7 text-ivory">
-              <p className="eyebrow !text-ivory/45">All six, one download</p>
+          {/* Closing CTA card — the last thing on the strip */}
+          <article className="w-[20rem] shrink-0 sm:w-[22rem]">
+            <div className="gallery-card gallery-cta relative flex h-full flex-col justify-center overflow-hidden rounded-[calc(var(--radius-card)+4px)] p-7">
+              <Grain opacity={0.16} />
+              <p className="eyebrow !text-ivory/65">All six, one download</p>
               <p className="display mt-3 text-[1.7rem] leading-tight text-ivory">
                 Own the whole system for ₹299.
               </p>
-              <p className="mt-3 text-[0.86rem] leading-relaxed text-ivory/60">
+              <p className="mt-3 text-[0.86rem] leading-relaxed text-ivory/75">
                 Instant access, free future updates, and a 10-day refund
                 promise if it doesn&apos;t sharpen your outreach.
               </p>
-              <ButtonLink href="/checkout" variant="accent" size="lg" className="mt-7 w-full">
+              <ButtonLink href="/checkout" variant="primary" size="lg" className="mt-7 w-full">
                 Get the kit — ₹299
               </ButtonLink>
-              <p className="mt-3 text-center text-[0.72rem] text-ivory/45">
+              <p className="mt-3 text-center text-[0.72rem] text-ivory/60">
                 UPI &amp; cards · secure via Razorpay
               </p>
             </div>
@@ -234,8 +304,8 @@ export function LookInside() {
         </ScrollGallery>
       </div>
 
-      <Container className="pb-20 md:pb-24">
-        <p className="text-center text-[0.82rem] text-muted">
+      <Container className="relative pb-24 md:pb-28">
+        <p className="text-center text-[0.82rem] text-ivory/40">
           Keep scrolling — the gallery moves with you.
         </p>
       </Container>

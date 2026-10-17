@@ -10,7 +10,6 @@ import { ScrollProgress, useScrolledPast } from "../motion";
 
 const NAV = [
   { href: "/#inside", label: "What's inside" },
-  { href: "/#pricing", label: "Pricing" },
   { href: "/sample", label: "Free sample" },
   { href: "/contact", label: "Support" },
 ];

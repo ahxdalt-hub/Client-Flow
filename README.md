@@ -66,7 +66,7 @@ python scripts/product/build_all.py
 ## Notes
 
 - Everything degrades gracefully when Supabase/Resend are unset: checkout still verifies payment and issues download tokens; emails are logged server-side instead.
-- No fake functionality: testimonials, counters, urgency timers and social-proof widgets are deliberately absent.
+- No fake functionality: no testimonials, no urgency timers, no invented numbers. The hero proof badge's count is the real paid-order count (floor 200 — `src/lib/social-proof.ts`); its four faces are licensed stock placeholders to be swapped for real buyer photos (`BUYER_AVATARS` in `src/components/marketing/hero.tsx`).
 - The connected Supabase project carries the previous app's schema; `src/lib/orders.ts` is adapted to it (no buyer PII stored — Razorpay retains contact data and is used for receipt email). `supabase/schema.sql` documents the mapping plus optional first-party tables.
 - Receipt emails are transactional only — purchasing never subscribes anyone to marketing.
 - The in-process rate limiter is per-instance on serverless; swap in a shared-store (Upstash/Vercel KV) implementation behind the same `checkRateLimit` signature if abuse appears.

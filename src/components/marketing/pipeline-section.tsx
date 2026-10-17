@@ -1,16 +1,38 @@
 import { Container, Section, SectionHeading } from "../ui";
 import { Reveal } from "../motion";
 import { Pipeline } from "../art/pipeline";
+import { PhotoBackdrop } from "../art/photo-backdrop";
 import { FlowRibbon } from "../art/ambient";
 
 /**
- * The five-stage route from cold prospect to signed deal. The visual is the
- * point of this section, so the copy stays short.
+ * The five-stage route from cold prospect to signed deal.
+ *
+ * The photograph is the desk the sequence gets written on — a notebook,
+ * a pen, and the niche list — veiled into the ivory so the type stays
+ * crisp, then the drawing sits on its own sheet above it. The rail fills
+ * with the scroll (see <Pipeline>), so the section is never a still.
  */
 export function PipelineSection() {
   return (
-    <Section ariaLabel="The outreach sequence" id="sequence" className="relative overflow-hidden border-t border-line">
-      <FlowRibbon className="pointer-events-none absolute inset-x-0 top-16 z-0 h-40 w-full opacity-50" />
+    <Section
+      ariaLabel="The outreach sequence"
+      id="sequence"
+      className="relative isolate overflow-hidden"
+    >
+      <PhotoBackdrop
+        src="/images/notes-desk.jpg"
+        sizes="100vw"
+        speed={52}
+        objectPosition="center 44%"
+        scrim={
+          <>
+            <span className="photo-scrim" />
+            <span className="photo-cast" />
+          </>
+        }
+      />
+
+      <FlowRibbon className="pointer-events-none absolute inset-x-0 top-16 z-0 h-40 w-full opacity-40" />
 
       <Container className="relative z-10">
         <SectionHeading
@@ -26,7 +48,7 @@ export function PipelineSection() {
           description="The kit is organised around the only job that matters: taking a stranger from “who are you?” to a signed scope — without guessing what to say at any step."
         />
 
-        <div className="mt-16">
+        <div className="pipeline-panel mt-16">
           <Pipeline />
         </div>
 

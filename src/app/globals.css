@@ -340,6 +340,103 @@ html.js .word-inner {
   }
 }
 
+/* ── Footer scene ────────────────────────────────────────────
+   The page's closing backdrop: a warm dusk gradient, three softly
+   drifting colour fields, and quiet "signal" arcs rising from the
+   horizon. Built from CSS + SVG only — no photograph — so it stays
+   crisp at any size and costs nothing to load. Decorative. */
+.footer-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, #ffffff 0%, #fdfbf7 42%, #f7f0e6 100%);
+}
+.footer-glow {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  filter: blur(70px);
+  will-change: transform;
+}
+.footer-glow--peach {
+  top: -32%;
+  right: -14%;
+  width: 46rem;
+  height: 46rem;
+  opacity: 0.55;
+  background: radial-gradient(circle at 40% 40%, rgb(224 160 111 / 0.4), transparent 68%);
+  animation: footer-drift-a 26s ease-in-out infinite;
+}
+.footer-glow--dusk {
+  bottom: -44%;
+  left: 50%;
+  width: 66rem;
+  height: 42rem;
+  transform: translateX(-50%);
+  opacity: 0.7;
+  background: radial-gradient(
+    closest-side,
+    rgb(192 86 47 / 0.22),
+    rgb(214 138 90 / 0.1) 52%,
+    transparent 76%
+  );
+  animation: footer-breathe 16s ease-in-out infinite;
+}
+.footer-glow--shade {
+  bottom: -36%;
+  right: -16%;
+  width: 42rem;
+  height: 42rem;
+  opacity: 0.28;
+  background: radial-gradient(circle at 55% 45%, rgb(20 17 14 / 0.16), transparent 66%);
+  animation: footer-drift-b 32s ease-in-out infinite;
+}
+.footer-arcs {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  display: block;
+  width: min(74rem, 135%);
+  height: auto;
+  aspect-ratio: 3 / 1;
+  transform: translateX(-50%);
+}
+.footer-arcs circle {
+  fill: none;
+  stroke: rgb(178 77 38 / 0.11);
+  stroke-width: 1;
+}
+@keyframes footer-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-5%, 4%, 0) scale(1.1);
+  }
+}
+@keyframes footer-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.04);
+  }
+  50% {
+    transform: translate3d(5%, -4%, 0) scale(0.96);
+  }
+}
+@keyframes footer-breathe {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.06);
+    opacity: 0.78;
+  }
+}
+
 /* ── Film grain ──────────────────────────────────────────────
    SVG turbulence, inline so it costs zero requests. */
 .grain {
@@ -391,9 +488,18 @@ html.js [data-reveal].revealed .signal-arc {
 }
 
 /* ── Pipeline ────────────────────────────────────────────────
-   Five stages on a rail that fills as it enters the viewport. */
+   Five stages on a rail that fills with the scroll. `<Pipeline>`
+   eases the section's own progress through the viewport (0 → 1)
+   into `--pipeline`, and every part of the drawing reads it: the
+   fill scales, and each node lights as the fill reaches its `--at`
+   offset. It defaults to 1, so with JavaScript off the entire
+   route is drawn and readable. */
 .pipeline {
   position: relative;
+  --pipeline: 1;
+}
+html.js .pipeline {
+  --pipeline: 0;
 }
 .pipeline-rail {
   position: absolute;
@@ -409,14 +515,43 @@ html.js [data-reveal].revealed .signal-arc {
   width: 100%;
   height: 100%;
   transform-origin: left center;
+  transform: scaleX(var(--pipeline));
   background: linear-gradient(90deg, var(--color-accent), #e0a06f);
-  transition: transform 1.5s var(--ease-out-expo) 0.15s;
 }
-html.js .pipeline-rail-fill {
-  transform: scaleX(0);
+/* The packet: a loop that keeps the rail alive once the fill parks. */
+.pipeline-rail-packet {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f0a878, var(--color-accent));
+  box-shadow:
+    0 0 0 4px rgb(178 77 38 / 0.12),
+    0 0 16px 4px rgb(178 77 38 / 0.38);
+  animation: pipeline-packet-x 5.6s var(--ease-smooth) infinite;
 }
-html.js [data-reveal].revealed .pipeline-rail-fill {
-  transform: scaleX(1);
+@keyframes pipeline-packet-x {
+  0% {
+    left: 0;
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  86% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+    transform: scale(0.5);
+  }
 }
 .pipeline-track {
   display: grid;
@@ -430,6 +565,8 @@ html.js [data-reveal].revealed .pipeline-rail-fill {
   text-align: center;
 }
 .pipeline-node {
+  /* Lights over the last 5% of its own span of the rail. */
+  --node-on: clamp(0, (var(--pipeline) - var(--at, 0)) / 0.05, 1);
   position: relative;
   z-index: 1;
   display: grid;
@@ -437,22 +574,32 @@ html.js [data-reveal].revealed .pipeline-rail-fill {
   width: 44px;
   height: 44px;
   border-radius: 999px;
+  /* Unlit fallback first, then the scroll-mixed version — so a browser
+     without color-mix simply draws the quiet node rather than nothing. */
   border: 1px solid var(--color-line-strong);
   background: var(--color-paper);
   color: var(--color-accent);
-  box-shadow: 0 1px 0 #fff inset;
-}
-html.js .pipeline-node {
-  opacity: 0;
-  transform: scale(0.6);
-}
-html.js [data-reveal].revealed .pipeline-node {
-  opacity: 1;
-  transform: none;
-  transition:
-    opacity 0.5s var(--ease-out-expo),
-    transform 0.6s var(--ease-spring);
-  transition-delay: calc(var(--i, 0) * 120ms + 180ms);
+  border-color: color-mix(
+    in srgb,
+    var(--color-accent) calc(var(--node-on) * 100%),
+    var(--color-line-strong)
+  );
+  background: color-mix(
+    in srgb,
+    var(--color-accent) calc(var(--node-on) * 100%),
+    var(--color-paper)
+  );
+  color: color-mix(
+    in srgb,
+    #ffffff calc(var(--node-on) * 100%),
+    var(--color-accent)
+  );
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.5) inset;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.5) inset,
+    0 0 0 calc(var(--node-on) * 6px) rgb(178 77 38 / calc(var(--node-on) * 0.1));
+  transform: scale(calc(1 + var(--node-on) * 0.04));
+  transition: transform 0.5s var(--ease-spring);
 }
 .pipeline-step {
   margin-top: 1rem;
@@ -476,6 +623,191 @@ html.js [data-reveal].revealed .pipeline-node {
   font-size: 0.82rem;
   line-height: 1.55;
   color: var(--color-muted);
+}
+/* The route sits on a photograph, so the drawing is given its own sheet:
+   a sheet of near-paper that keeps the rail and the type at full contrast
+   while the picture reads around it. */
+.pipeline-panel {
+  position: relative;
+  border-radius: calc(var(--radius-card) + 6px);
+  border: 1px solid rgb(255 255 255 / 0.62);
+  background: rgb(251 250 247 / 0.88);
+  box-shadow: var(--shadow-float);
+  backdrop-filter: blur(16px) saturate(1.06);
+  -webkit-backdrop-filter: blur(16px) saturate(1.06);
+  padding: clamp(1.5rem, 4.5vw, 3.25rem) clamp(1.25rem, 4vw, 3rem);
+}
+
+/* ── Photographic backdrops ──────────────────────────────────
+   A full-bleed picture, drifting against the scroll and breathing on a
+   slow zoom, then veiled by the section's own scrims so the copy above
+   never fights it. Decorative only: no text, no pointer events. */
+.photo-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* Overscanned by well over the parallax drift, so no edge can show. */
+.photo-bg-parallax {
+  position: absolute;
+  inset: -9% 0;
+}
+.photo-bg-img {
+  object-fit: cover;
+  opacity: 0.9;
+}
+/* Veil: opaque at both seams, thinnest where the picture is the point. */
+.photo-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--color-ivory) 0%,
+    rgb(251 250 247 / 0.72) 14%,
+    rgb(251 250 247 / 0.6) 38%,
+    rgb(251 250 247 / 0.64) 66%,
+    var(--color-ivory) 100%
+  );
+}
+/* A warm cast, so the photograph sits inside the clay palette. */
+.photo-cast {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(150deg, rgb(178 77 38 / 0.16), transparent 56%),
+    linear-gradient(0deg, rgb(244 239 231 / 0.42), transparent 62%);
+}
+
+/* ── How it works: the dark instruction panel ─────────────────
+   One photograph, veiled to ink, with the three steps written straight
+   onto it. Two loops keep the band from ever sitting completely still:
+   a warm glow drifting behind the copy, and a slow sheen crossing the
+   panel. Both are decoration. */
+.steps-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: calc(var(--radius-card) + 8px);
+  border: 1px solid rgb(251 250 247 / 0.12);
+  background: var(--color-ink);
+  box-shadow: var(--shadow-float);
+  padding: clamp(2rem, 5vw, 3.75rem) clamp(1.5rem, 4.5vw, 3.5rem);
+}
+.steps-panel .grain {
+  z-index: 2;
+}
+.steps-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(80% 62% at 14% 0%, rgb(64 36 22 / 0.56), transparent 68%),
+    linear-gradient(
+      180deg,
+      rgb(20 17 14 / 0.66) 0%,
+      rgb(20 17 14 / 0.82) 55%,
+      rgb(20 17 14 / 0.93) 100%
+    );
+}
+.steps-glow {
+  position: absolute;
+  z-index: 1;
+  border-radius: 999px;
+  filter: blur(26px);
+  will-change: transform;
+  animation: look-drift 34s ease-in-out infinite alternate;
+}
+.steps-glow--a {
+  top: -7rem;
+  left: -4rem;
+  height: 20rem;
+  width: 20rem;
+  background: radial-gradient(circle at 50% 50%, rgb(206 104 56 / 0.42), transparent 68%);
+}
+.steps-glow--b {
+  right: -3rem;
+  bottom: -9rem;
+  height: 22rem;
+  width: 22rem;
+  animation-duration: 44s;
+  animation-direction: alternate-reverse;
+  background: radial-gradient(circle at 50% 50%, rgb(224 160 111 / 0.28), transparent 70%);
+}
+/* The sheen: one slow pass of light, on a loop. */
+.steps-panel::after {
+  content: "";
+  position: absolute;
+  inset: -30% -45%;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(
+    112deg,
+    transparent 40%,
+    rgb(255 213 178 / 0.1) 50%,
+    transparent 60%
+  );
+  animation: panel-sheen 11s var(--ease-smooth) infinite;
+}
+@keyframes panel-sheen {
+  0% {
+    transform: translate3d(-14%, 0, 0);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(14%, 0, 0);
+    opacity: 0;
+  }
+}
+.steps-track {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 2rem;
+}
+.steps-item {
+  position: relative;
+  padding-top: 1.35rem;
+}
+/* Each step opens with a rule that warms toward the accent, so the three
+   read as one line of instruction rather than three cards. */
+.steps-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgb(226 132 74 / 0.75),
+    rgb(251 250 247 / 0.14) 58%,
+    transparent
+  );
+}
+.steps-num {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.2rem, 4.5vw, 3.1rem);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(251 250 247 / 0.42);
+  transition:
+    color 0.5s var(--ease-out-expo),
+    -webkit-text-stroke-color 0.5s var(--ease-out-expo);
+}
+.steps-item:hover .steps-num {
+  color: rgb(226 132 74 / 0.92);
+  -webkit-text-stroke-color: transparent;
 }
 
 /* ── Pipeline: stacked on small screens ───────────────────── */
@@ -513,14 +845,17 @@ html.js [data-reveal].revealed .pipeline-node {
   .pipeline-rail-fill {
     background: linear-gradient(180deg, var(--color-accent), #e0a06f);
     transform-origin: top center;
+    transform: scaleY(var(--pipeline));
   }
-  html.js .pipeline-rail-fill {
-    transform: scaleY(0);
+  /* Down the rail instead of across it. */
+  .pipeline-rail-packet {
+    left: 50%;
+    top: 0;
+    margin: -3.5px 0 0 -3.5px;
+    animation-name: pipeline-packet-y;
   }
-  html.js [data-reveal].revealed .pipeline-rail-fill {
-    transform: scaleY(1);
-  }
-  /* Gallery: native horizontal scroll on small screens. */
+  /* Gallery: native horizontal scroll on small screens, so the pinned
+     stage (which assumes the track is centred) comes off. */
   .gallery-wrap {
     height: auto;
   }
@@ -530,11 +865,57 @@ html.js [data-reveal].revealed .pipeline-node {
     overflow-x: auto;
     padding-block: 1rem;
   }
+  .gallery-stage {
+    display: none;
+  }
   .gallery-track {
     transform: none !important;
   }
+  .gallery-track > * {
+    transform: none;
+    opacity: 1;
+    will-change: auto;
+  }
   .gallery-progress {
     display: none;
+  }
+  /* Without the fan, the centred-card halo has nothing to measure against. */
+  .gallery-card {
+    box-shadow:
+      0 26px 60px -40px rgb(0 0 0 / 0.9),
+      0 0 44px -22px rgb(226 132 74 / 0.4);
+  }
+  .gallery-card:hover {
+    transform: none;
+  }
+}
+
+/* Down the rail: the vertical packet, and the three-step grid. */
+@keyframes pipeline-packet-y {
+  0% {
+    top: 0;
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  86% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@media (min-width: 768px) {
+  .steps-track {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.75rem;
   }
 }
 
@@ -721,12 +1102,17 @@ html.js [data-reveal].revealed .pipeline-node {
   border-color: var(--color-line-strong);
 }
 
-/* Accordion animation */
+/* ── Accordion ─────────────────────────────────────────────────
+   grid-template-rows 0fr → 1fr opens to whatever height the answer
+   happens to be, with no measurement and no max-height fudge. */
 .faq-item[data-open="true"] .faq-icon {
   transform: rotate(45deg);
+  color: var(--color-accent);
 }
 .faq-icon {
-  transition: transform 0.35s var(--ease-out-expo);
+  transition:
+    transform 0.35s var(--ease-out-expo),
+    color 0.3s ease;
 }
 .faq-answer {
   display: grid;
@@ -738,6 +1124,53 @@ html.js [data-reveal].revealed .pipeline-node {
 }
 .faq-answer > div {
   overflow: hidden;
+}
+/* The answer fades in just behind the row expansion, so the height and
+   the text never feel like they arrive at the same time. The hidden
+   state is scoped to html.js, so the answer is never invisible if the
+   script never runs. */
+html.js .faq-answer p {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.4s ease,
+    transform 0.5s var(--ease-out-expo);
+}
+.faq-item[data-open="true"] .faq-answer p {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.1s;
+}
+/* Row affordance: a warm tint on hover, held while the row is open. */
+.faq-item > button {
+  border-radius: 12px;
+  transition: background-color 0.4s var(--ease-smooth);
+}
+.faq-item:hover > button,
+.faq-item[data-open="true"] > button {
+  background-color: rgb(178 77 38 / 0.05);
+}
+/* Row number — a quiet index that warms up on hover/open. */
+.faq-index {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-line-strong);
+  transition: color 0.35s ease;
+}
+.faq-item:hover .faq-index,
+.faq-item[data-open="true"] .faq-index {
+  color: var(--color-accent);
+}
+
+/* Glass surface: reads as a card on the plain pages and as a pane of
+   glass once it sits over the FAQ backdrop. */
+.faq-glass {
+  background: rgb(255 255 255 / 0.72);
+  box-shadow: var(--shadow-lift);
+  backdrop-filter: blur(16px) saturate(1.08);
+  -webkit-backdrop-filter: blur(16px) saturate(1.08);
 }
 
 /* Sound toggle */
@@ -796,9 +1229,161 @@ html.js [data-reveal].revealed .img-settle img {
   animation: slow-zoom 28s var(--ease-smooth) infinite alternate;
 }
 
+/* ── FAQ backdrop ──────────────────────────────────────────────
+   The FAQ sits on a photographed backdrop. The photograph is held near
+   its native size so it never has to be blown up — that is what keeps it
+   crisp — and it is tucked in behind the accordion, so the frosted card
+   reads as glass over the picture. Every edge is masked rather than
+   hard-cut, so the teal melts into the paper the site is printed on. */
+.faq-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.faq-bg-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(56% 64% at 68% 44%, rgb(127 183 180 / 0.34), transparent 70%),
+    radial-gradient(44% 52% at 44% 104%, rgb(127 183 180 / 0.14), transparent 72%);
+}
+
+/* The photograph. It is our own extended render: the wall and the podium
+   carry on past the original frame so the picture can run all the way to
+   the right edge of the viewport instead of stopping mid-paper.
+   The box is anchored right and sized so it always reaches that edge while
+   staying wedged behind the accordion at every width — `50% + 156px` keeps
+   pace with the centred container above 1320px, `100% - 464px` takes over
+   below it, where the card sits at a fixed 584px.
+   The image *covers* the box, so there is never any letterboxing and every
+   hairline of the masks below lands on real picture. */
+.faq-bg-art {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(calc(50% + 156px), calc(100% - 464px));
+  overflow: hidden;
+  /* The vertical fade lives here, on the element that never moves. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 10%,
+    #000 90%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 10%,
+    #000 90%,
+    transparent
+  );
+}
+
+/* Overscanned by more than the parallax drift (46px), so the picture can
+   never slide far enough to expose an edge above or below. */
+.faq-bg-parallax {
+  position: absolute;
+  inset: -6% 0;
+}
+
+.faq-bg-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left center;
+  /* This fade does travel with the picture, but a horizontal gradient is
+     unchanged by a vertical nudge, so it still reads as static.
+     Held in px rather than % so the blend stays the same length at every
+     viewport size: it always finishes just short of the question mark. */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    rgb(0 0 0 / 0.42) 88px,
+    #000 220px
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    rgb(0 0 0 / 0.42) 88px,
+    #000 220px
+  );
+}
+
+/* Below the split point the photograph becomes a tint over the whole
+   section — a wash, not a picture — and the glass accordion carries
+   the contrast. */
+@media (max-width: 1023px) {
+  .faq-bg-art {
+    width: 100%;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .faq-bg-img {
+    object-position: center;
+    opacity: 0.12;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* ── Inside: pinned art backdrop + file rail ─────────────────
+   The cover art sits in a sticky viewport-height window behind the
+   section, so it holds still while the six file cards scroll over
+   it. The active card lights its label, its tick and its hairline. */
+/* The file name swaps in as each card takes the middle of the screen. */
+html.js .inside-step {
+  animation: fade-up 0.6s var(--ease-out-expo) both;
+}
+.inside-tick {
+  flex: 1 1 0;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--color-line);
+  transition: background-color 0.5s var(--ease-out-expo);
+}
+.inside-tick[data-state="passed"] {
+  background: var(--color-line-strong);
+}
+.inside-tick[data-state="active"] {
+  background: var(--color-accent);
+}
+/* Accent hairline down the edge of the file that owns the viewport. */
+.module-card {
+  position: relative;
+}
+.module-card::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 28%;
+  bottom: 28%;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  transform: scaleY(0);
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.module-slot[data-active="true"] .module-card {
+  border-color: var(--color-line-strong);
+  box-shadow: var(--shadow-lift);
+}
+.module-slot[data-active="true"] .module-card::before {
+  transform: scaleY(1);
+}
+
 /* ── Horizontal scroll gallery ─────────────────────────────────
-   Vertical scroll drives a horizontal track. Falls back to native
-   horizontal scrolling on touch/small screens and reduced motion. */
+   Vertical scroll drives a horizontal track. <ScrollGallery> eases the
+   track toward the scroll position instead of snapping to it, then hands
+   every child `--gallery-focus` (-1 at the left edge of the lane, 0 dead
+   centre, 1 at the right) so the cards can fan into depth.
+   Falls back to native horizontal scrolling on touch/small screens and
+   reduced motion. */
 .gallery-wrap {
   position: relative;
   height: 200vh;
@@ -811,31 +1396,277 @@ html.js [data-reveal].revealed .img-settle img {
   align-items: center;
   overflow: hidden;
 }
+/* Scenery pinned inside the window, behind the cards. The gallery variables
+   are written on `.gallery-wrap`, so everything in here inherits them. */
+.gallery-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
 .gallery-track {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 1.5rem;
   padding-inline: max(1.25rem, calc((100vw - 1240px) / 2));
   will-change: transform;
 }
+/* Depth fan: the card in the middle of the lane sits flat, lit and at full
+   strength; its neighbours turn away and recede. Every value below reads a
+   variable that defaults to 0, so with JS off this is simply a flat row. */
+.gallery-track > * {
+  transform-origin: 50% 50%;
+  transform: perspective(1700px) rotateY(calc(var(--gallery-focus, 0) * -7deg))
+    translate3d(0, calc(var(--gallery-focus-abs, 0) * 16px), 0)
+    scale(calc(1 - var(--gallery-focus-abs, 0) * 0.06));
+  opacity: calc(1 - var(--gallery-focus-abs, 0) * 0.45);
+  will-change: transform, opacity;
+}
+/* Paper on ink: the centred card throws a warm halo onto the stage floor. */
+.gallery-card {
+  transition:
+    transform 0.45s var(--ease-out-expo),
+    box-shadow 0.45s var(--ease-out-expo),
+    border-color 0.45s ease;
+  box-shadow:
+    0 40px 80px -42px rgb(0 0 0 / 0.9),
+    0 0 74px -18px rgb(226 132 74 / calc(0.5 * (1 - var(--gallery-focus-abs, 0))));
+}
+.gallery-card:hover {
+  transform: translateY(-4px);
+  border-color: rgb(251 250 247 / 0.55);
+  box-shadow:
+    0 48px 92px -42px rgb(0 0 0 / 0.95),
+    0 0 92px -16px rgb(226 132 74 / calc(0.7 * (1 - var(--gallery-focus-abs, 0))));
+}
+/* The closing card: terracotta, so the last thing on the dark strip is the
+   brightest thing on it. */
+.gallery-cta {
+  background: radial-gradient(
+    130% 100% at 8% 0%,
+    #e2864a 0%,
+    #b24d26 44%,
+    #85331a 100%
+  );
+  color: var(--color-ivory);
+}
 .gallery-progress {
   position: absolute;
-  bottom: 3.25rem;
+  bottom: 4.6rem;
   left: 50%;
+  z-index: 2;
   height: 2px;
-  width: min(320px, 60vw);
+  width: min(300px, 58vw);
   transform: translateX(-50%);
-  overflow: hidden;
   border-radius: 999px;
-  background: var(--color-line);
+  background: rgb(251 250 247 / 0.14);
 }
-.gallery-progress > span {
+.gallery-progress-fill {
   display: block;
   height: 100%;
   width: 100%;
   border-radius: 999px;
   transform-origin: left center;
   transform: scaleX(var(--gallery-progress, 0));
-  background: var(--color-accent);
+  background: linear-gradient(90deg, rgb(226 132 74 / 0.4), #e2864a);
+}
+.gallery-progress-knob {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--gallery-progress, 0) * 100%);
+  height: 7px;
+  width: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 999px;
+  background: var(--color-ivory);
+  box-shadow:
+    0 0 0 4px rgb(226 132 74 / 0.22),
+    0 0 20px 5px rgb(226 132 74 / 0.45);
+}
+
+/* ── Look inside: the dark stage ───────────────────────────────
+   One dark band in the middle of a light page. The ink makes the paper
+   files read as objects; ivory ramps at both seams keep the transition
+   from being a cut. The scenery scrolls past behind the pinned window
+   while a pool of light walks the stage with the strip. */
+.look-base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 38% at 50% -4%, rgb(64 36 22 / 0.9), transparent 64%),
+    linear-gradient(180deg, #100d0b 0%, #17130f 38%, #14110e 70%, #0f0c0a 100%);
+}
+.look-glow {
+  position: absolute;
+  border-radius: 999px;
+  animation: look-drift 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.look-glow--a {
+  top: 5%;
+  left: -16rem;
+  height: 46rem;
+  width: 46rem;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgb(206 104 56 / 0.32),
+    rgb(147 62 26 / 0.14) 44%,
+    transparent 72%
+  );
+}
+.look-glow--b {
+  top: 46%;
+  right: -18rem;
+  height: 44rem;
+  width: 44rem;
+  animation-duration: 38s;
+  animation-direction: alternate-reverse;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgb(224 160 111 / 0.22),
+    transparent 68%
+  );
+}
+.look-glow--c {
+  bottom: 2%;
+  left: 24%;
+  height: 40rem;
+  width: 40rem;
+  opacity: 0.85;
+  animation-duration: 46s;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgb(206 104 56 / 0.24),
+    transparent 70%
+  );
+}
+@keyframes look-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(5%, -5%, 0) scale(1.18);
+  }
+}
+.look-ramp {
+  position: absolute;
+  inset-inline: 0;
+  height: 6.5rem;
+  background: linear-gradient(180deg, var(--color-ivory), transparent);
+}
+.look-ramp--top {
+  top: 0;
+}
+.look-ramp--bottom {
+  bottom: 0;
+  transform: scaleY(-1);
+}
+
+/* The stage itself. */
+.look-cone,
+.look-grid {
+  position: absolute;
+  inset: 0;
+}
+/* Light falling from the top of the room. */
+.look-cone {
+  background: radial-gradient(
+    60% 44% at 50% 6%,
+    rgb(255 213 178 / 0.1),
+    transparent 72%
+  );
+}
+/* Hairline rule, drifting a touch slower than the cards. */
+.look-grid {
+  inset: -12% -6%;
+  background-image:
+    linear-gradient(90deg, rgb(251 250 247 / 0.055) 1px, transparent 1px),
+    linear-gradient(180deg, rgb(251 250 247 / 0.055) 1px, transparent 1px);
+  background-size: 92px 92px;
+  -webkit-mask-image: radial-gradient(76% 66% at 50% 50%, #000 20%, transparent 80%);
+  mask-image: radial-gradient(76% 66% at 50% 50%, #000 20%, transparent 80%);
+  transform: translate3d(calc(var(--gallery-x, 0px) * 0.07), 0, 0);
+}
+/* The pool of light that walks the stage with the strip. */
+.look-beam {
+  position: absolute;
+  top: -12%;
+  bottom: -12%;
+  left: 0;
+  width: min(48rem, 86vw);
+  transform: translate3d(calc(var(--gallery-progress, 0) * 100vw), 0, 0)
+    translateX(-50%);
+  background: radial-gradient(
+    50% 48% at 50% 50%,
+    rgb(226 132 74 / 0.34),
+    rgb(178 77 38 / 0.14) 46%,
+    transparent 74%
+  );
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+/* The manifest, running along the foot of the stage. */
+.look-ribbon {
+  position: absolute;
+  bottom: 0.85rem;
+  left: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 2.75rem;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.6vw, 2.1rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(251 250 247 / 0.18);
+  opacity: 0.85;
+  transform: translate3d(calc(1.5rem + var(--gallery-x, 0px) * 0.3), 0, 0);
+}
+.look-ribbon-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+.look-ribbon-num {
+  font-family: var(--font-sans);
+  font-size: 0.58em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgb(226 132 74 / 0.9);
+  -webkit-text-stroke: 0;
+}
+/* The file you are on, as a ghost numeral behind the sheets. Each numeral
+   owns a slot on the progress scale; two clamps make a trapezoid, so
+   neighbours cross-fade instead of cutting. */
+.look-num {
+  position: absolute;
+  bottom: clamp(4.5rem, 9vh, 6rem);
+  left: clamp(1.5rem, 5vw, 5rem);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(251 250 247 / 0.22);
+  opacity: 0;
+  opacity: calc(
+    clamp(
+        0,
+        (var(--gallery-progress, 0) - var(--at, 0) + var(--fw, 0.17)) /
+          var(--fw, 0.17),
+        1
+      ) *
+      clamp(
+        0,
+        (var(--at, 0) + var(--fw, 0.17) - var(--gallery-progress, 0)) /
+          var(--fw, 0.17),
+        1
+      )
+  );
 }
 
 /* ── Sticky buy bar ─────────────────────────────────────────── */
@@ -857,6 +1688,100 @@ html.js [data-reveal].revealed .img-settle img {
   transition: transform 0.55s var(--ease-out-expo), visibility 0s;
 }
 
+/* ── Free-sample band ─────────────────────────────────────────
+   The sample sits on the same photographed desk its copy describes, so the
+   offer reads as something you can already picture yourself using.
+   Two surfaces carry the proof, and they are deliberately different: the
+   panel around the preview is glass, because the picture should stay
+   present behind it, while the sheet inside is flat paper, because it is a
+   document and a document should look like one. The bridge at the foot
+   reuses the glass, so the ₹299 ask is framed by the free proof directly
+   above it rather than by a new idea. */
+.sample-panel,
+.sample-bridge {
+  position: relative;
+  overflow: hidden;
+  border-radius: calc(var(--radius-card) + 6px);
+  border: 1px solid rgb(255 255 255 / 0.6);
+  background: rgb(255 255 255 / 0.75);
+  box-shadow: var(--shadow-float);
+  backdrop-filter: blur(18px) saturate(1.06);
+  -webkit-backdrop-filter: blur(18px) saturate(1.06);
+}
+.sample-bridge {
+  background: rgb(255 255 255 / 0.82);
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+}
+/* One warm hairline across the bridge: the seam between the free proof
+   and the paid ask, drawn rather than announced. */
+.sample-bridge::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(178 77 38 / 0.45), transparent);
+}
+.sample-sheet {
+  border-radius: 14px;
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+  box-shadow: var(--shadow-lift);
+  padding: 1.1rem 1.15rem;
+}
+/* A template's blank to fill in. Monospace and tinted, so the reader can
+   see exactly which parts are theirs to write — that is the whole promise. */
+.sample-ph {
+  border-radius: 4px;
+  background: var(--color-accent-tint);
+  padding: 0.05rem 0.28rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.62rem;
+  color: var(--color-accent-strong);
+  white-space: nowrap;
+}
+
+/* The sample band's veil, and it is deliberately lighter than the shared
+   `.photo-scrim`: the whole point of this section is to show a thing rather
+   than describe it, so the desk it is read at should stay visible. On wide
+   screens the veil is biased to the left, where the copy sits, and thins
+   toward the right so the photograph genuinely shows through the glass
+   preview panel. Below `lg` the copy spans the full width, so the veil
+   becomes even and stays heavier — legibility beats atmosphere on a phone. */
+.sample-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--color-ivory) 0%,
+    rgb(251 250 247 / 0.74) 12%,
+    rgb(251 250 247 / 0.62) 50%,
+    rgb(251 250 247 / 0.72) 86%,
+    var(--color-ivory) 100%
+  );
+}
+@media (min-width: 1024px) {
+  .sample-scrim {
+    background:
+      linear-gradient(
+        100deg,
+        rgb(251 250 247 / 0.95) 0%,
+        rgb(251 250 247 / 0.9) 45%,
+        rgb(251 250 247 / 0.6) 60%,
+        rgb(251 250 247 / 0.2) 80%,
+        rgb(251 250 247 / 0.08) 100%
+      ),
+      linear-gradient(
+        180deg,
+        var(--color-ivory) 0%,
+        rgb(251 250 247 / 0.42) 14%,
+        rgb(251 250 247 / 0.3) 50%,
+        rgb(251 250 247 / 0.52) 86%,
+        var(--color-ivory) 100%
+      );
+  }
+}
+
 /* ── Reduced motion: honour it everywhere ─────────────────── */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -872,21 +1797,36 @@ html.js [data-reveal].revealed .img-settle img {
   .pulse-dot,
   .marquee-inner,
   .aurora-blob,
+  .footer-glow,
   .signal-core,
   .flow-ribbon-dot,
+  .pipeline-rail-packet,
+  .steps-glow,
+  .steps-panel::after,
   .scroll-cue::after {
     animation: none !important;
   }
   .btn,
   .card-lift,
   .faq-answer,
+  .faq-answer p,
   .faq-icon,
+  .faq-item > button,
+  .faq-index,
   .magnetic,
   .tilt,
   .spotlight::after,
   .scroll-progress,
-  .buy-bar {
+  .buy-bar,
+  .inside-tick,
+  .pipeline-node,
+  .steps-num,
+  .module-card::before {
     transition: none;
+  }
+  /* The file name never animates in; it just is. */
+  html.js .inside-step {
+    animation: none;
   }
   /* Word reveals and pipeline drawing resolve to their finished state. */
   html.js .word-inner {
@@ -898,11 +1838,8 @@ html.js [data-reveal].revealed .img-settle img {
     stroke-dashoffset: 0;
     transition: none;
   }
-  html.js .pipeline-node,
   html.js .pipeline-rail-fill {
-    opacity: 1;
     transform: none;
-    transition: none;
   }
   .parallax {
     transform: none;
@@ -930,10 +1867,27 @@ html.js [data-reveal].revealed .img-settle img {
     height: auto;
     overflow-x: auto;
   }
+  .gallery-stage {
+    display: none;
+  }
   .gallery-track {
     transform: none !important;
   }
+  .gallery-track > * {
+    transform: none;
+    opacity: 1;
+    will-change: auto;
+  }
   .gallery-progress {
     display: none;
+  }
+  .gallery-card {
+    transition: none;
+    box-shadow:
+      0 26px 60px -40px rgb(0 0 0 / 0.9),
+      0 0 44px -22px rgb(226 132 74 / 0.4);
+  }
+  .look-glow {
+    animation: none !important;
   }
 }

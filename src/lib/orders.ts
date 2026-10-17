@@ -95,6 +95,30 @@ export async function findOrderByRazorpayId(
 }
 
 /**
+ * How many paid orders exist. Returns null when Supabase is unconfigured or
+ * unreachable — callers must treat null as "unknown", never as zero, because
+ * the site shows this number to buyers (see src/lib/social-proof.ts).
+ */
+export async function countPaidOrders(): Promise<number | null> {
+  const db = client();
+  if (!db) return null;
+  try {
+    const { count, error } = await db
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "paid");
+    if (error) {
+      console.warn("[orders] count failed:", error.message);
+      return null;
+    }
+    return count ?? null;
+  } catch (error) {
+    console.warn("[orders] count threw:", error);
+    return null;
+  }
+}
+
+/**
  * Marks the newest matching row paid. Returns `transitioned` only when this
  * call flipped created → paid. Razorpay callbacks (verify + webhook) arrive
  * concurrently and at-least-once, so callers use `transitioned` to fire
