@@ -13,6 +13,37 @@ import { CONTACT, DELIVERY } from "@/lib/pricing";
 const FILE_DIR = path.join(process.cwd(), "assets", "deliverables");
 const FILE_NAME = DELIVERY.paidBundleFile;
 
+// The paid bundle is deliberately kept out of the public git repo (committing
+// it would hand the product away). On Vercel the Git-based build therefore has
+// no local copy, so the handler falls back to a private Supabase Storage
+// object — the gate above (signed token + paid order row) still applies to
+// both sources.
+const STORAGE_BUCKET = process.env.DELIVERABLE_BUCKET ?? "clientflow-deliverables";
+
+/** The paid zip, from the bundled copy when present, else private Storage. */
+async function loadPaidBundle(): Promise<Uint8Array> {
+  try {
+    return new Uint8Array(await readFile(path.join(FILE_DIR, FILE_NAME)));
+  } catch {
+    // Not bundled with this deployment — fall through to object storage.
+  }
+
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("paid bundle missing locally and Supabase Storage is not configured");
+  }
+  const res = await fetch(
+    `${url}/storage/v1/object/${STORAGE_BUCKET}/${FILE_NAME}`,
+    {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      cache: "no-store",
+    },
+  );
+  if (!res.ok) throw new Error(`storage fetch failed (${res.status})`);
+  return new Uint8Array(await res.arrayBuffer());
+}
+
 /** Logs only a salted hash of IPs, never the raw address. */
 const ANONYMIZER = "clientflow-download-log-salt";
 
@@ -103,9 +134,9 @@ export async function GET(
     await logDownload(orderId, hashIp(clientIp(request)));
   });
 
-  // 4. Stream the file.
+  // 4. Stream the file (bundled copy or private object storage).
   try {
-    const zip = await readFile(path.join(FILE_DIR, FILE_NAME));
+    const zip = await loadPaidBundle();
     return new Response(new Uint8Array(zip), {
       status: 200,
       headers: {

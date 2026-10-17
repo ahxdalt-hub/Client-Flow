@@ -88,7 +88,10 @@ Razorpay ──POST /api/payments/webhook──▶ (parallel second path)
 GET /api/download/<orderId>?t=<token>
    1. HMAC token binding + expiry verified (timing-safe)
    2. order row must be "paid" when Supabase is reachable
-   3. zip streamed from assets/deliverables (outside /public)
+   3. zip streamed from assets/deliverables (outside /public) when bundled,
+      otherwise from the private Supabase Storage bucket
+      `clientflow-deliverables` (the paid file is not committed to the
+      public repo)
 ```
 
 Key controls (audit-mapped):
@@ -166,9 +169,11 @@ Nothing in this repo can do these — they are account/approval actions:
 3. **Webhook** — Dashboard → Webhooks → add `https://<domain>/api/payments/webhook`,
    secret into `RAZORPAY_WEBHOOK_SECRET`, subscribe to
    `payment.captured`, `payment.failed`, `refund.processed`.
-4. **Refund policy window** — the refund policy at `/refund-policy` states
-   `REFUND_WINDOW_DAYS` (10). Refund all requests inside the window manually
-   from the dashboard within the same window.
+4. **Refund policy** — the policy at `/refund-policy` covers delivery
+   failures only (non-delivery, broken/incomplete files, incorrect charge),
+   reportable within `REFUND_WINDOW_DAYS` (10). Verify the claim against the
+   download audit log, then refund it from the dashboard within the same
+   window. Change of mind after download is explicitly not covered.
 5. **Email** — set `RESEND_API_KEY` + `EMAIL_FROM` (verified domain) to make
    receipts automatic instead of logged.
 6. **Domain** — `NEXT_PUBLIC_SITE_URL` is the live domain

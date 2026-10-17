@@ -44,7 +44,7 @@ npm run build
 - Content sources: `assets/product-assets/sources/` (6 Python data files — emails, DMs, follow-up system, proposals, guide)
 - Build scripts: `scripts/product/` (`build_all.py` renders HTML → PDF via headless Edge/puppeteer-core, DOCX via python-docx, XLSX via openpyxl, then packages)
 - Final deliverables: `assets/product-assets/final/` — `ClientFlow-Handbook.pdf` (66 pages), `Email-Templates.docx`, `Proposal-Templates.docx`, `Lead-Tracker.xlsx`, `Quick-Start-Guide.pdf`, `ClientFlow-Sample.pdf`
-- Paid deliverable: `assets/deliverables/clientflow-outreach-kit.zip` — **outside `/public`**, served only through the verified download route; bundled via `outputFileTracingIncludes`
+- Paid deliverable: `assets/deliverables/clientflow-outreach-kit.zip` — **outside `/public`**, served only through the verified download route. It is also intentionally kept out of the public git repo, so Git-based (Vercel) builds have no local copy: the route then streams the same file from the private Supabase Storage bucket `clientflow-deliverables` (`DELIVERABLE_BUCKET`). Local/CI builds still bundle it via `outputFileTracingIncludes`
 - Free sample: `assets/product-assets/final/ClientFlow-Sample.pdf` → `public/downloads/clientflow-sample.zip` (ungated by design)
 
 Rebuild everything (PowerShell):
@@ -56,7 +56,7 @@ python scripts/product/build_all.py
 ## Setup checklist for production
 
 1. **Razorpay account + KYC activation first** (approval is owner action; if the operator is a minor, the parent/guardian must be the account holder) — details and reasoning in `docs/PAYMENTS.md`.
-2. Run `supabase/schema.sql` in the Supabase SQL editor (optional first-party tables).
+2. Run `supabase/schema.sql` in the Supabase SQL editor (optional first-party tables). Upload `assets/deliverables/clientflow-outreach-kit.zip` to the private Supabase Storage bucket `clientflow-deliverables` (see `.env.example`) so Git-based deployments can serve the paid kit.
 3. Configure Razorpay webhook (`/api/payments/webhook`; events: `payment.captured`, `payment.failed`, `refund.processed`) with the secret saved as `RAZORPAY_WEBHOOK_SECRET`.
 4. Switch Razorpay keys from test to live; regenerate `DOWNLOAD_TOKEN_SECRET`.
 5. Set `RESEND_API_KEY` + `EMAIL_FROM` (verified domain) for automatic receipt/delivery email (logged server-side if unset — buyers can still recover via `/order/[…]` and support).
