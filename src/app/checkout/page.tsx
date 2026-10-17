@@ -3,8 +3,10 @@ import Link from "next/link";
 
 import { CheckoutForm } from "./checkout-form";
 import { Container } from "@/components/ui";
+import { TrustBox } from "@/components/marketing/trust-box";
 import { MODULES, INCLUDED_FILES, FILE_COUNT, SCRIPT_TOTAL } from "@/lib/product-content";
 import { activePrice, PRICING } from "@/lib/pricing";
+import { getCustomerCount } from "@/lib/social-proof";
 
 export const metadata: Metadata = {
   title: "Secure checkout",
@@ -12,7 +14,9 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const customers = await getCustomerCount();
+
   return (
     <div className="border-b border-line bg-ivory">
       <Container className="py-14 md:py-20">
@@ -78,6 +82,10 @@ export default function CheckoutPage() {
                     it's "will this actually be any good?". We answer it with
                     things the buyer can check for themselves before paying,
                     rather than with a claim they can't. */}
+                <div className="mt-5">
+                  <TrustBox customers={customers} />
+                </div>
+
                 <div className="mt-5 rounded-xl border border-line bg-ivory p-4">
                   <p className="eyebrow !text-[0.62rem]">Before you pay</p>
                   <ul className="mt-2.5 space-y-1.5 text-[0.78rem] leading-relaxed text-muted">

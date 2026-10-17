@@ -17,6 +17,7 @@ import { SITE } from "@/config/site";
 import { activePrice, PRICING, PRODUCT } from "@/lib/pricing";
 import { FILE_COUNT, HANDBOOK_PAGES, INCLUDED_FILES } from "@/lib/product-content";
 import { jsonLd } from "@/lib/structured-data";
+import { getCustomerCount } from "@/lib/social-proof";
 
 export const metadata: Metadata = {
   title: "Freelance Outreach Templates & Lead Tracker | ClientFlow",
@@ -76,7 +77,9 @@ const AUDIENCES: [string, string][] = [
   ["Starting solo after a job", "Templates that assume zero audience, zero case studies, zero warm intros."],
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const customers = await getCustomerCount();
+
   return (
     <>
       <script
@@ -157,7 +160,7 @@ export default function HomePage() {
         </Container>
       </Section>
 
-      <CtaBand />
+      <CtaBand customers={customers} />
     </>
   );
 }

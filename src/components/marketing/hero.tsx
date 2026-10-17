@@ -8,10 +8,10 @@ import { ProofChip } from "./proof-chip";
 import { BuyCta } from "./buy-cta";
 import { activePrice, PRICING } from "@/lib/pricing";
 import { PAYMENTS_LIVE } from "@/lib/payments-status";
-import { getBuyerCount } from "@/lib/social-proof";
+import { getCustomerCount } from "@/lib/social-proof";
 
 export async function Hero() {
-  const buyers = await getBuyerCount();
+  const customers = await getCustomerCount();
 
   return (
     <div className="relative isolate overflow-hidden border-b border-line">
@@ -70,7 +70,7 @@ export async function Hero() {
                 on a narrow screen — and it states facts when there aren't yet
                 real buyers to point at. */}
             <Reveal variant="up" delay={720} y={14} className="mt-7">
-              <ProofChip buyers={buyers} />
+              <ProofChip customers={customers} />
             </Reveal>
 
             <Reveal

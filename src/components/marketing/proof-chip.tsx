@@ -1,35 +1,28 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/cn";
-import { FILE_COUNT, HANDBOOK_PAGES, SCRIPT_TOTAL } from "@/lib/product-content";
-import { BUYER_AVATARS, CROWD_THRESHOLD, formatSoldCount } from "@/lib/social-proof";
+import { BUYER_AVATARS, formatSoldCount } from "@/lib/customer-count";
 
 /**
  * The proof chip that sits with the buy button.
  *
- * Two honest states, picked by the real paid-order count — never by what would
- * look best:
+ * Shows the customer figure resolved by src/lib/social-proof.ts — off-store
+ * customers plus real paid orders, rounded down. It is never a literal typed
+ * into this component, so it cannot drift from the one place that owns it.
  *
- *  - **Crowd** (>= CROWD_THRESHOLD real buyers): the usual faces + count, using
- *    only real buyer photos. If none are supplied it shows the count alone
- *    rather than borrowing a stranger's face for it.
- *  - **Facts** (early, or the count is unknown): the strongest verifiable
- *    things we can say instead — the size and shape of the kit. Every number
- *    here maps to a file that actually ships (see product-content.ts).
- *
- * This is why the hero never needs a hand-maintained "copies sold" figure:
- * the moment there are real sales, this element says so by itself.
+ * Faces appear only when real, consented buyer photographs have been supplied.
+ * Otherwise a check emblem carries the signal — never a stock portrait, which
+ * would be a false endorsement rather than decoration.
  */
 export function ProofChip({
-  buyers,
+  customers,
   className,
 }: {
-  /** Real paid orders, or null when the count is unknown. */
-  buyers: number | null;
+  /** Resolved customer count — pass `await getCustomerCount()`. */
+  customers: number;
   className?: string;
 }) {
-  const showCrowd = buyers !== null && buyers >= CROWD_THRESHOLD;
-  const faces = showCrowd ? BUYER_AVATARS.slice(0, 4) : [];
+  const faces = BUYER_AVATARS.slice(0, 4);
 
   return (
     <span
@@ -61,25 +54,12 @@ export function ProofChip({
       )}
 
       <span className="leading-tight">
-        {showCrowd ? (
-          <>
-            <span className="block text-[0.74rem] font-semibold text-ink">
-              Bought by {formatSoldCount(buyers)} buyers
-            </span>
-            <span className="block text-[0.66rem] text-muted">
-              Indian freelancers &amp; small studios
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="block text-[0.74rem] font-semibold text-ink">
-              {SCRIPT_TOTAL} templates &amp; scripts · {FILE_COUNT} files
-            </span>
-            <span className="block text-[0.66rem] text-muted">
-              {HANDBOOK_PAGES}-page handbook · yours to keep
-            </span>
-          </>
-        )}
+        <span className="block text-[0.74rem] font-semibold text-ink">
+          {formatSoldCount(customers)} happy customers
+        </span>
+        <span className="block text-[0.66rem] text-muted">
+          Indian freelancers &amp; small studios
+        </span>
       </span>
     </span>
   );

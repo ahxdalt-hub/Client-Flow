@@ -1,49 +1,56 @@
 import "server-only";
 
 import { countPaidOrders } from "./orders";
+import { OFFSTORE_CUSTOMERS } from "./customer-count";
 
 /**
- * Social proof, without a single invented number.
+ * Customer proof — the server half.
  *
- * There is deliberately **no floor, no seed and no placeholder** in this file.
- * The buyer count shown on the page is either the real number of paid orders,
- * or it is not shown at all (see `<ProofChip />`, which falls back to
- * verifiable facts about the product instead).
+ * ── Two sources, one number ─────────────────────────────────────────
  *
- * Why so strict: "Bought by 200+" with no 200 sales is a misleading
- * advertisement — Consumer Protection Act 2019 (misleading claims), the CCPA
- * guidelines, ASCI, and e-commerce rules all bite on exactly this — and it is
- * the one claim on a storefront a stranger can disprove in a single search.
- * A new store that says "11 copies sold" is believed. A new store that claims
- * 200 customers is not. Honesty converts better *and* survives scrutiny.
+ * 1. `OFFSTORE_CUSTOMERS` — customers the owner has served **outside this
+ *    website** (sold locally, in person, before the storefront existed). An
+ *    owner-declared figure, so it lives as one constant in version control
+ *    rather than as a string typed into a component where it would drift.
  *
- * When real sales exist, this file needs no edit: `getBuyerCount()` picks them
- * up and `<ProofChip />` upgrades itself automatically.
+ * 2. Real paid orders on this site, counted from the `orders` table.
+ *
+ * They are added, never replaced, and the total is rounded **down** — so the
+ * displayed figure can only understate, and it rises on its own as the
+ * storefront sells.
+ *
+ * ── The rules this file exists to enforce ───────────────────────────
+ *
+ * - Never invent a number in a component. Every customer figure on the site
+ *   resolves here.
+ * - No star ratings, no "4.9/5", no review counts. There is no review system,
+ *   and an invented rating is both a Google structured-data violation and a
+ *   misleading claim — which is why the homepage `Product` markup deliberately
+ *   omits `aggregateRating` and `review`.
+ * - No stock faces. A stranger's photograph under a customers claim is a false
+ *   endorsement, not decoration.
+ * - Keep it defensible. The owner should be able to evidence the figure from
+ *   sales records if a customer or a regulator ever asks.
+ *
+ * The pure constants and formatters live in `customer-count.ts` so that
+ * presentational components can use them on both sides of the server/client
+ * boundary.
  */
 
-/**
- * Below this many real buyers, "Bought by N+" oversells what's actually true,
- * so the chip states product facts instead of a crowd. Lower it only if you
- * genuinely have that many sales.
- */
-export const CROWD_THRESHOLD = 25;
+export {
+  OFFSTORE_CUSTOMERS,
+  CROWD_THRESHOLD,
+  BUYER_AVATARS,
+  roundSoldCount,
+  formatSoldCount,
+} from "./customer-count";
 
 /**
- * Real buyer photos, if you have them — with written permission, cropped
- * square, and only for people who actually bought. Leave empty and the chip
- * renders no faces at all (never stock portraits: a stranger's face under a
- * "bought by" claim is a false endorsement, not a decoration).
- *
- *   export const BUYER_AVATARS = ["/images/buyers/ananya.jpg"];
- */
-export const BUYER_AVATARS: string[] = [];
-
-/**
- * Real paid order count. Cached briefly in-isolate so a burst of homepage hits
- * doesn't hammer Supabase (the Workers runtime has no shared cache here — see
- * the Cache Components note in next.config.ts). Returns `null` when the
- * database is unconfigured or unreachable — callers must treat null as
- * "unknown", never as zero.
+ * Real paid orders from this storefront. Cached briefly in-isolate so a burst
+ * of homepage hits doesn't hammer Supabase (the Workers runtime has no shared
+ * cache here — see the Cache Components note in next.config.ts). Returns
+ * `null` when the database is unconfigured or unreachable — callers must treat
+ * null as "unknown", never as zero.
  */
 const BUYER_COUNT_TTL_MS = 5 * 60 * 1000;
 let buyerCountCache: { value: number | null; at: number } | null = null;
@@ -63,17 +70,10 @@ export async function getBuyerCount(): Promise<number | null> {
 }
 
 /**
- * Rounds down to a "200+"-style figure. Rounding down — never up — keeps the
- * claim true no matter how the count moves between deploys.
+ * The number shown on the site. Never null: the off-store floor is a declared
+ * fact, so a database outage can only ever hide the *increase*, not the base.
  */
-export function roundSoldCount(sold: number): number {
-  if (sold < 10) return sold;
-  if (sold < 100) return Math.floor(sold / 10) * 10;
-  if (sold < 1000) return Math.floor(sold / 50) * 50;
-  return Math.floor(sold / 100) * 100;
-}
-
-/** "200+" — for text, where a <Counter> would be overkill. */
-export function formatSoldCount(sold: number): string {
-  return `${roundSoldCount(sold)}+`;
+export async function getCustomerCount(): Promise<number> {
+  const buyers = await getBuyerCount();
+  return OFFSTORE_CUSTOMERS + (buyers ?? 0);
 }

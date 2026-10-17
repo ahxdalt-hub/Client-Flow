@@ -6,6 +6,7 @@ import { ButtonLink, Container } from "../ui";
 import { Reveal, Magnetic } from "../motion";
 import { Grain } from "../art/ambient";
 import { BuyCta } from "./buy-cta";
+import { TrustBox } from "./trust-box";
 import { activePrice } from "@/lib/pricing";
 import { PAYMENTS_LIVE } from "@/lib/payments-status";
 
@@ -13,7 +14,7 @@ import { PAYMENTS_LIVE } from "@/lib/payments-status";
  * Final CTA. The emotional close: a warm photograph behind ink, one clear
  * ask, and the risk-reversal restated where the decision happens.
  */
-export function CtaBand() {
+export function CtaBand({ customers }: { customers: number }) {
   return (
     <section
       aria-label="Get the kit"
@@ -63,6 +64,14 @@ export function CtaBand() {
           >
             Or start with the free sample
           </ButtonLink>
+        </Reveal>
+
+        <Reveal
+          variant="up"
+          delay={160}
+          className="mt-10 flex flex-col items-center"
+        >
+          <TrustBox customers={customers} tone="dark" />
         </Reveal>
 
         <Reveal variant="fade" delay={220} className="mt-6">
