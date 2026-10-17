@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useEffect,
   useMemo,
   useRef,
@@ -395,8 +396,14 @@ export function Spotlight({
 }
 
 /**
- * Word-by-word masked reveal for display headings. Spaces are preserved and
- * the words stay in the accessibility tree as normal text.
+ * Word-by-word masked reveal for display headings.
+ *
+ * The separating space lives *between* the `.word` spans, never inside them.
+ * `.word` clips its overflow to mask the rising animation, and a trailing
+ * space inside an overflow-hidden inline-block is collapsed away — which
+ * renders "Steady clients" as "Steadyclients". Keeping the space outside the
+ * mask (as a plain text node between the inline-blocks) keeps the words
+ * readable, selectable and correctly spaced in the accessibility tree.
  */
 export function Words({
   text,
@@ -414,12 +421,14 @@ export function Words({
   return (
     <span className={className}>
       {words.map((word, i) => (
-        <span key={`${word}-${i}`} className="word">
-          <span className="word-inner" style={{ animationDelay: `${delay + i * step}ms` }}>
-            {word}
+        <Fragment key={`${word}-${i}`}>
+          <span className="word">
+            <span className="word-inner" style={{ animationDelay: `${delay + i * step}ms` }}>
+              {word}
+            </span>
           </span>
           {i < words.length - 1 ? " " : null}
-        </span>
+        </Fragment>
       ))}
     </span>
   );

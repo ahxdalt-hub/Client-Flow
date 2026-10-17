@@ -16,6 +16,10 @@ export const RATE_LIMITS = {
   verify: { limit: 30, windowMs: 10 * 60 * 1000 },
   /** First-party analytics beacon. */
   track: { limit: 120, windowMs: 10 * 60 * 1000 },
+  /** Self-serve download-link recovery: looks up a paid order by Razorpay id. */
+  recover: { limit: 20, windowMs: 10 * 60 * 1000 },
+  /** Owner-dashboard login: a handful of attempts, then locked out. */
+  admin: { limit: 10, windowMs: 10 * 60 * 1000 },
 } as const;
 
 type Bucket = { count: number; resetAt: number };

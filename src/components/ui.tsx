@@ -118,10 +118,15 @@ const variants = {
   ghost: "btn-ghost",
 } as const;
 
+/**
+ * `min-h-*` rather than `h-*` on purpose: a fixed height plus a wrapped label
+ * clips the text out of the top and bottom of the pill. With a minimum the
+ * button simply grows if a long label ever wraps in a narrow column.
+ */
 const sizes = {
-  sm: "h-9 px-4 text-[0.82rem]",
-  md: "h-11 px-6 text-[0.92rem]",
-  lg: "h-[3.25rem] px-7 text-[1rem]",
+  sm: "min-h-9 px-4 text-[0.82rem]",
+  md: "min-h-11 px-6 text-[0.92rem]",
+  lg: "min-h-[3.25rem] px-7 text-[1rem]",
 } as const;
 
 type Variant = keyof typeof variants;

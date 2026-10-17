@@ -7,12 +7,16 @@ import { Logo } from "../logo";
 import { SoundToggle } from "./sound-toggle";
 import { ButtonLink, Container } from "../ui";
 import { ScrollProgress, useScrolledPast } from "../motion";
+import { activePrice } from "@/lib/pricing";
+import { track } from "@/lib/analytics-client";
 
 const NAV = [
   { href: "/#inside", label: "What's inside" },
   { href: "/sample", label: "Free sample" },
   { href: "/contact", label: "Support" },
 ];
+
+const BUY_LABEL = `Get the kit — ₹${activePrice()}`;
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -59,16 +63,29 @@ export function Header() {
 
           <div className="flex items-center gap-2.5">
             <SoundToggle />
-            <ButtonLink href="/checkout" variant="primary" size="sm" className="hidden sm:inline-flex">
-              Get the kit — ₹299
-            </ButtonLink>
+            {/* Wrapped rather than given `hidden` directly: `cn()` is a plain
+                join, so a `hidden` passed into ButtonLink loses to the button's
+                own `inline-flex` depending on utility order. The wrapper makes
+                the breakpoint unambiguous. */}
+            <span className="hidden shrink-0 sm:inline-flex">
+              <ButtonLink
+                href="/checkout"
+                variant="primary"
+                size="sm"
+                className="whitespace-nowrap"
+                data-sound="off"
+                onClick={() => track("purchase_click", { location: "header" })}
+              >
+                {BUY_LABEL}
+              </ButtonLink>
+            </span>
             <button
               type="button"
               onClick={() => setOpen(!open)}
               aria-expanded={open}
               aria-controls="mobile-nav"
               aria-label={open ? "Close menu" : "Open menu"}
-              className="grid h-9 w-9 place-items-center rounded-full border border-line lg:hidden"
+              className="grid h-10 w-10 place-items-center rounded-full border border-line lg:hidden"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 {open ? (
@@ -109,10 +126,23 @@ export function Header() {
               ))}
             </ul>
             <div className="mt-6 flex flex-col gap-3">
-              <ButtonLink href="/checkout" variant="primary" size="lg" className="w-full">
-                Get the kit — ₹299
+              <ButtonLink
+                href="/checkout"
+                variant="primary"
+                size="lg"
+                className="w-full"
+                data-sound="off"
+                onClick={() => track("purchase_click", { location: "mobile-nav" })}
+              >
+                {BUY_LABEL}
               </ButtonLink>
-              <ButtonLink href="/sample" variant="ghost" size="md" className="w-full">
+              <ButtonLink
+                href="/sample"
+                variant="ghost"
+                size="md"
+                className="w-full"
+                onClick={() => setOpen(false)}
+              >
                 Try the free sample first
               </ButtonLink>
             </div>

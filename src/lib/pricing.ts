@@ -35,6 +35,12 @@ export const CONTACT = {
   business: "ClientFlow",
 } as const;
 
+/**
+ * Window (days from purchase) in which a delivery-failure claim — the files
+ * never arrived, arrived broken/incomplete, or the charge was wrong — can be
+ * reported. Change of mind after download is outside this policy; see
+ * /refund-policy.
+ */
 export const REFUND_WINDOW_DAYS = 10;
 /** Relative URL of the published refund policy (linked in checkout). */
 export const REFUND_POLICY_PATH = "/refund-policy";
@@ -56,5 +62,5 @@ export const DELIVERY = {
     "README.md",
   ],
   /** Free sample is ungated by design; everything paid is gated. */
-  freeSampleUrl: "/downloads/clientflow-sample.zip",
+  freeSampleUrl: "/downloads/clientflow-sample.pdf",
 } as const;

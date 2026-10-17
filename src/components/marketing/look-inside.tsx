@@ -3,6 +3,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { Container, ButtonLink } from "../ui";
 import { Grain } from "../art/ambient";
 import { ScrollGallery } from "../scroll-gallery";
+import { activePrice } from "@/lib/pricing";
+import { PAYMENTS_LIVE } from "@/lib/payments-status";
 
 /**
  * "Look inside" — a pinned, scroll-driven horizontal gallery on a dark stage.
@@ -250,8 +252,8 @@ export function LookInside() {
             <span className="text-ivory/45">Nothing to assemble.</span>
           </h2>
           <p className="mt-4 text-[1.05rem] leading-relaxed text-ivory/60">
-            This is what lands in your inbox the moment you pay — a designed
-            handbook, editable templates, four proposals and a working tracker.
+            This is what you get the moment you pay — a designed handbook,
+            editable templates, four proposals and a working tracker.
             Scroll to walk through every file.
           </p>
         </div>
@@ -287,18 +289,20 @@ export function LookInside() {
               <Grain opacity={0.16} />
               <p className="eyebrow !text-ivory/65">All six, one download</p>
               <p className="display mt-3 text-[1.7rem] leading-tight text-ivory">
-                Own the whole system for ₹299.
+                Own the whole system for ₹{activePrice()}.
               </p>
               <p className="mt-3 text-[0.86rem] leading-relaxed text-ivory/75">
-                Instant access, free future updates, and a 10-day refund
-                promise if it doesn&apos;t sharpen your outreach.
+                Instant access, free future updates, and a full refund if
+                anything on our side goes wrong.
               </p>
               <ButtonLink href="/checkout" variant="primary" size="lg" className="mt-7 w-full">
-                Get the kit — ₹299
+                Get the kit — ₹{activePrice()}
               </ButtonLink>
-              <p className="mt-3 text-center text-[0.72rem] text-ivory/60">
-                UPI &amp; cards · secure via Razorpay
-              </p>
+              {PAYMENTS_LIVE ? (
+                <p className="mt-3 text-center text-[0.72rem] text-ivory/60">
+                  UPI &amp; cards · secure via Razorpay
+                </p>
+              ) : null}
             </div>
           </article>
         </ScrollGallery>

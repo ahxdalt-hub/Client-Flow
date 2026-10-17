@@ -155,7 +155,7 @@ export function CheckoutForm() {
       if (!res.ok || !data.ok || !data.downloadToken) {
         throw new Error(
           data.error ??
-            "Payment received but verification failed — check your email for the download link, or contact support.",
+            "Payment received but verification failed — contact support with your order id.",
         );
       }
       play("success");
@@ -176,9 +176,8 @@ export function CheckoutForm() {
         Almost in your folder.
       </h1>
       <p className="mt-3 text-[0.95rem] leading-relaxed text-muted">
-        Enter your name and email — the download link is generated the moment
-        your payment clears. {`Phone is optional, and we never email anyone
-        other than order updates.`}
+        Enter your name and email — your download link appears on the
+        confirmation page the moment your payment clears. Phone is optional.
       </p>
 
       <div className="mt-8 space-y-5">
@@ -191,7 +190,7 @@ export function CheckoutForm() {
           required
         />
         <Field
-          label="Email (for delivery)"
+          label="Email (for receipt &amp; support)"
           name="email"
           type="email"
           autoComplete="email"

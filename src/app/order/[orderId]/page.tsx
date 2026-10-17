@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
 
+import { DOWNLOAD_TOKEN_TTL_SECONDS } from "@/lib/config";
 import { findOrderByRazorpayId, ORDER_STATUS_CREATED } from "@/lib/orders";
-import { verifyDownloadToken } from "@/lib/tokens";
+import { createDownloadToken, verifyDownloadToken } from "@/lib/tokens";
 import { OrderSuccess } from "./order-success";
 
 export const metadata: Metadata = {
@@ -47,27 +48,38 @@ async function OrderContent({
 
   const { orderId } = await params;
   const t = (await searchParams).t;
-  const token = Array.isArray(t) ? t[0] : t ?? "";
+  const urlToken = Array.isArray(t) ? t[0] : t ?? "";
 
-  // Resolve status fully before rendering JSX (no JSX inside try/catch).
-  let status: "ready" | "pending" | "invalid" = verifyDownloadToken(token, orderId)
-    .ok
-    ? "ready"
-    : "invalid";
+  let token = urlToken;
+  let status: "ready" | "pending" | "invalid" = "invalid";
 
-  if (status === "ready") {
-    try {
-      const order = await findOrderByRazorpayId(orderId);
-      if (!order || order.status === ORDER_STATUS_CREATED) {
-        // Possible race: verification/webhook hasn't committed yet.
-        status = "pending";
-      } else if (order.status !== "paid") {
-        // "failed" or anything else — refuse to show the download.
-        status = "invalid";
-      }
-    } catch {
-      // Supabase unreachable — the signed token alone is valid authorisation.
+  // A valid signed token in the URL always authorises a download.
+  const tokenOk = verifyDownloadToken(urlToken, orderId).ok;
+
+  try {
+    const order = await findOrderByRazorpayId(orderId);
+    if (!order) {
+      // No row (Supabase unconfigured, or an unknown order id): fall back to
+      // the signed token alone, exactly as before.
+      status = tokenOk ? "ready" : "invalid";
+    } else if (order.status === ORDER_STATUS_CREATED) {
+      // Possible race: verification/webhook hasn't committed yet.
+      status = "pending";
+    } else if (order.status === "paid") {
+      // Bookmarkable link: if the URL wasn't already signed, mint a fresh
+      // token from the paid order row. This is what lets a buyer who closed
+      // the tab return to /order/<orderId> and still download.
+      token = tokenOk
+        ? urlToken
+        : createDownloadToken(orderId, DOWNLOAD_TOKEN_TTL_SECONDS);
+      status = "ready";
+    } else {
+      // "failed" or anything else (e.g. refunded) — refuse to show the download.
+      status = "invalid";
     }
+  } catch {
+    // Supabase unreachable — the signed token alone remains authorisation.
+    status = tokenOk ? "ready" : "invalid";
   }
 
   return <OrderSuccess orderId={orderId} token={token} status={status} />;

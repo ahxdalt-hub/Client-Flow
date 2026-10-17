@@ -1,6 +1,5 @@
 import { NextResponse, after } from "next/server";
 
-import { DOWNLOAD_TOKEN_TTL_SECONDS, WEBSITE_URL } from "@/lib/config";
 import { fetchRazorpayPayment } from "@/lib/razorpay";
 import {
   classifyWebhookEvent,
@@ -8,8 +7,6 @@ import {
   verifyRazorpayWebhookSignature,
 } from "@/lib/razorpay-signature";
 import { findOrderByRazorpayId, markOrderPaid, revokeOrderAccess, logEvent } from "@/lib/orders";
-import { createDownloadToken } from "@/lib/tokens";
-import { sendOrderPaidEmail } from "@/lib/email";
 
 /**
  * Razorpay webhook — the authoritative fallback for buyers who paid but
@@ -17,8 +14,8 @@ import { sendOrderPaidEmail } from "@/lib/email";
  * access. Razorpay delivers at-least-once and may retry for hours/days, so
  * every path here is idempotent:
  *   - payment.captured → created→paid transitions only; duplicate callbacks
- *     (or a race with /api/payments/verify) re-fulfil nothing and re-email
- *     nothing (markOrderPaid returns transitioned).
+ *     (or a race with /api/payments/verify) re-fulfil nothing
+ *     (markOrderPaid returns transitioned).
  *   - refund.processed/created → paid→failed transition (access revocation).
  *   - payment.failed → logged only; nothing is granted.
  * Configure in the Razorpay dashboard: POST /api/payments/webhook, secret
@@ -92,7 +89,7 @@ export async function POST(request: Request) {
     const local = await findOrderByRazorpayId(orderId);
 
     // Already marked paid — the verify route or an earlier webhook fulfilled
-    // it. Do NOT re-email or re-issue (duplicate callback).
+    // it. Do NOT re-fulfil (duplicate callback).
     if (local && local.status === "paid") {
       return NextResponse.json({ ok: true, alreadyFulfilled: true });
     }
@@ -120,32 +117,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, alreadyFulfilled: true });
     }
 
-    const email = (parsed.payment?.email ?? parsed.payment?.notes?.email ?? "")
-      .trim()
-      .toLowerCase();
-    const token = createDownloadToken(
-      orderId,
-      DOWNLOAD_TOKEN_TTL_SECONDS,
-    );
-    const downloadUrl = `${WEBSITE_URL}/api/download/${orderId}?t=${token}`;
-    const name = parsed.payment?.notes?.name ?? "";
-    const amount = parsed.payment?.amount ?? local?.amount_paise ?? 0;
-
-    // Best-effort deliverability: try the email first; if the provider is
-    // configured but the send fails, nothing is lost — the buyer can still
-    // recover via the confirmation page or support, who can resend from this
-    // log entry.
+    // Fulfilment is recorded for monitoring. The buyer's download link is
+    // shown on the order page — nothing is emailed.
     after(async () => {
-      if (email) {
-        const { sent } = await sendOrderPaidEmail({
-          to: email,
-          name,
-          orderId,
-          downloadUrl,
-          amountRupees: Math.round(amount / 100),
-        });
-        if (!sent) console.warn("[webhook] fulfilment email not sent", { orderId });
-      }
       await logEvent("purchase_webhook_fulfilled", { orderId });
     });
 

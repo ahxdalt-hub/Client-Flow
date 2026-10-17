@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Container, Section, Badge, ButtonLink } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import { Aurora } from "@/components/art/ambient";
+import { activePrice } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Free sample — read a full template first",
@@ -57,17 +58,17 @@ export default function SamplePage() {
               theatre. One click, one PDF — the same quality you&apos;d pay for.
             </p>
             <a
-              href="/downloads/clientflow-sample.zip"
+              href="/downloads/clientflow-sample.pdf"
               download
               className="btn btn-primary mt-8 inline-flex h-[3.25rem] items-center gap-2.5 rounded-full px-8 text-[1rem] font-semibold"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16" />
               </svg>
-              Download sample — ZIP
+              Download sample — PDF
             </a>
             <p className="mt-3 text-[0.78rem] text-muted">
-              1 designed PDF · ~310 KB · no signup, works offline
+              1 designed PDF · ~500 KB · no signup, works offline
             </p>
           </Reveal>
         </div>
@@ -92,7 +93,7 @@ export default function SamplePage() {
               — costs less than one client won with it.
             </div>
             <ButtonLink href="/checkout" variant="primary" size="md" className="mt-5 w-full">
-              Skip ahead — get the full kit ₹299
+              Skip ahead — get the full kit ₹{activePrice()}
             </ButtonLink>
           </div>
         </Reveal>

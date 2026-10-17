@@ -5,7 +5,7 @@ import { CONTACT, REFUND_WINDOW_DAYS } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Refund policy",
-  description: `The ${REFUND_WINDOW_DAYS}-day full refund promise on the ClientFlow Outreach Kit — how to ask, what happens.`,
+  description: `The refund policy for the ClientFlow Outreach Kit — what is covered in full, what is not, and how to ask.`,
   alternates: { canonical: "/refund-policy" },
 };
 
@@ -17,43 +17,76 @@ export default function RefundPage() {
       crumbs={[{ href: "/refund-policy", label: "Refunds" }]}
     >
       <p>
-        The strongest guarantee we can write is also the simplest:
-        <strong> use the kit for {REFUND_WINDOW_DAYS} days. If it doesn&apos;t help your
-        outreach, ask for a refund and you&apos;ll get one — full stop.</strong>
+        We sell a download, so this page is short and specific rather than
+        sweeping.{" "}
+        <strong>
+          If something failed on our side, you get a full refund — no argument
+          and no back-and-forth.
+        </strong>{" "}
+        If the files reached you fine and you simply changed your mind, that
+        isn&apos;t something a download can be returned for. Both halves are
+        spelled out below so neither of us is guessing.
       </p>
 
-      <h2>How to ask</h2>
+      <h2>Covered in full</h2>
       <ul>
         <li>
-          Email <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a> with
-          the subject &ldquo;Refund&rdquo;.
+          <strong>You paid and never got the files.</strong> The download link
+          never arrived, expired before you could use it, or we couldn&apos;t
+          reissue it.
         </li>
         <li>
-          Include your order ref (in your receipt email) — or just reply to
-          that email.
+          <strong>You were charged twice</strong>, or charged an amount
+          different from the price shown at checkout.
         </li>
-        <li>No form-filling, no calls, no over-explaining needed.</li>
+        <li>
+          <strong>The files arrived broken or incomplete</strong> — the archive
+          won&apos;t open, or something listed in the kit contents is missing.
+        </li>
       </ul>
 
-      <h2>What happens</h2>
+      <h2>Not covered</h2>
+      <ul>
+        <li>
+          <strong>Change of mind after downloading.</strong> A download can&apos;t
+          be handed back. Once the files are on your machine there is nothing
+          for us to recover, so a refund isn&apos;t a cost we can absorb in that
+          case. This is the reason the policy is written narrowly.
+        </li>
+        <li>
+          <strong>Results.</strong> Whether a template gets replies depends on
+          your niche, pricing and follow-through. We can&apos;t promise a
+          specific outcome, and a disappointing outcome isn&apos;t a defect.
+        </li>
+        <li>
+          <strong>Reselling or sharing the files</strong>, which breaks the
+          license — see the <a href="/terms">terms</a>.
+        </li>
+      </ul>
+
+      <h2>How to ask</h2>
       <p>
-        Refunds are processed to your original payment method through
-        Razorpay. Banks usually take 5–7 working days to show it, and that
-        part is their timing, not ours.
+        Email <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a> with the
+        subject &ldquo;Refund&rdquo; and your order ref (shown on your order
+        confirmation page). Tell us what you hit — a failed download, a missing
+        file, a double charge. If it&apos;s one of the three cases above, we
+        don&apos;t ask you to justify it any further.
       </p>
 
-      <h2>Boundary</h2>
+      <h2>Timing</h2>
       <p>
-        Because one license covers one person, anyone who re-sells or
-        re-publishes the kit forfeits the refund promise — that&apos;s the
-        single condition.
+        Ask within {REFUND_WINDOW_DAYS} days of purchase, so we can check the
+        delivery logs while they&apos;re still fresh. Refunds go back to your
+        original payment method through Razorpay; banks usually take 5–7
+        working days to show it, and that part is their timing, not ours.
       </p>
 
-      <h2>Why so generous</h2>
+      <h2>After a refund</h2>
       <p>
-        Retail-refund rates on templates in this price band are typically tiny,
-        and the kit is built to be used within a week. Your risk is genuinely
-        low; this policy is us being able to say so out loud.
+        A refund ends the purchase, so your download link stops working at that
+        point and the license goes with it. Files already saved to your machine
+        stay there — a download can&apos;t be revoked, which is the same reason
+        change of mind isn&apos;t covered above.
       </p>
     </LegalShell>
   );

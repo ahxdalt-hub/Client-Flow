@@ -4,13 +4,12 @@ import {
   activePrice,
   amountInPaise,
   DOWNLOAD_TOKEN_TTL_SECONDS,
-  WEBSITE_URL,
 } from "@/lib/config";
 import { isRazorpayConfigured, fetchRazorpayPayment } from "@/lib/razorpay";
 import { verifyRazorpayPaymentSignature } from "@/lib/razorpay-signature";
+import { isRazorpayOrderId, isRazorpayPaymentId } from "@/lib/razorpay-ids";
 import { createDownloadToken } from "@/lib/tokens";
 import { findOrderByRazorpayId, markOrderPaid, logEvent } from "@/lib/orders";
-import { sendOrderPaidEmail } from "@/lib/email";
 import { PRODUCT } from "@/lib/pricing";
 import { RATE_LIMITS, checkRateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -21,8 +20,6 @@ type VerifyBody = {
   email?: string;
   name?: string;
 };
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export async function POST(request: Request) {
   const rate = checkRateLimit(`verify:${clientIp(request)}`, RATE_LIMITS.verify);
@@ -45,15 +42,12 @@ export async function POST(request: Request) {
   const paymentId = body.razorpay_payment_id ?? "";
   const signature = body.razorpay_signature ?? "";
   if (
-    !/^order_[a-zA-Z0-9]{4,}$/.test(orderId) ||
-    !/^pay_[a-zA-Z0-9]{4,}$/.test(paymentId) ||
+    !isRazorpayOrderId(orderId) ||
+    !isRazorpayPaymentId(paymentId) ||
     !/^[a-f0-9]{32,64}$/.test(signature)
   ) {
     return NextResponse.json({ error: "Missing payment details." }, { status: 400 });
   }
-  const callerEmail = (body.email ?? "").trim().toLowerCase();
-  const emailIsValid = EMAIL_RE.test(callerEmail);
-
   if (!isRazorpayConfigured()) {
     return NextResponse.json(
       { error: "Payments are not configured on this deployment yet." },
@@ -102,10 +96,9 @@ export async function POST(request: Request) {
     }
 
     // 3. Mark paid — conditional created→paid transition: if another callback
-    //    (the webhook) already marked it paid, `transitioned` is false and
-    //    the fulfillment email is NOT sent again from here (idempotency).
-    const wasStored = Boolean(local);
-    const { transitioned } = await markOrderPaid({
+    //    (the webhook) already marked it paid, this call is a no-op
+    //    (idempotency).
+    await markOrderPaid({
       razorpayOrderId: orderId,
       razorpayPaymentId: paymentId,
     });
@@ -113,23 +106,11 @@ export async function POST(request: Request) {
     // 4. Issue the HMAC download token. Re-issuing on a repeat verify is
     //    safe: tokens share the same order id, are HMAC-signed and expire.
     const downloadToken = createDownloadToken(orderId, DOWNLOAD_TOKEN_TTL_SECONDS);
-    const downloadUrl = `${WEBSITE_URL}/api/download/${orderId}?t=${downloadToken}`;
 
-    // 5. Fulfillment email after the response returns (non-blocking). The
-    //    buyer's contact comes from the checkout form we received; the
-    //    webhook fallback uses Razorpay's own payment record instead.
+    // 5. Analytics after the response returns (non-blocking). The download
+    //    link itself is returned to the buyer below and shown on the order
+    //    page — nothing is emailed.
     after(async () => {
-      const email = emailIsValid ? callerEmail : "";
-      if ((!wasStored || transitioned) && email) {
-        // First fulfilment of this order in this process → email once.
-        await sendOrderPaidEmail({
-          to: email,
-          name: body.name ?? "",
-          orderId,
-          downloadUrl,
-          amountRupees: Math.round((row?.amount ?? amountInPaise(activePrice())) / 100),
-        });
-      }
       await logEvent("purchase_complete", {
         orderId,
         product: PRODUCT.slug,
@@ -141,7 +122,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[verify] failed:", error);
     return NextResponse.json(
-      { error: "We verified your payment but couldn't finish setup — check your email for the download link, or contact support." },
+      { error: "We verified your payment but couldn't finish setup — contact support with your order id and we'll sort it out." },
       { status: 500 },
     );
   }

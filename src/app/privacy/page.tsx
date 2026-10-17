@@ -25,9 +25,10 @@ export default function PrivacyPage() {
       <h2>What we collect</h2>
       <ul>
         <li>
-          <strong>Order data</strong> — your name, email, optional phone
-          number, order ref and payment amount. Purpose: issuing your receipt,
-          download link, and support.
+          <strong>Order data</strong> — your name, email and optional phone
+          number, stored with your order so we can deliver it, help if a
+          download fails, and issue a receipt. Payment instrument data (card,
+          UPI, netbanking credentials) is never stored — Razorpay holds that.
         </li>
         <li>
           <strong>First-party analytics</strong> — anonymous page-view and
@@ -65,10 +66,9 @@ export default function PrivacyPage() {
 
       <h2>Third parties</h2>
       <p>
-        Razorpay (payments), Vercel (hosting), Supabase (our order and
-        analytics database) and Resend (transactional email) each process
-        strictly the data required for their function, under their own
-        published policies.
+        Razorpay (payments), Vercel (hosting) and Supabase (our order and
+        analytics database) each process strictly the data required for their
+        function, under their own published policies.
       </p>
     </LegalShell>
   );

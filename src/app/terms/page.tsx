@@ -45,9 +45,11 @@ export default function TermsPage() {
       <h2>Refunds</h2>
       <p>
         Covered in detail on the <a href="/refund-policy">refund policy</a>{" "}
-        page: access the material for up to {REFUND_WINDOW_DAYS} days, and if
-        it doesn&apos;t help your outreach, ask and we&apos;ll refund the
-        amount.
+        page. In short: if something failed on our side — the download never
+        arrived, the files are broken or incomplete, or you were charged
+        incorrectly — you get a full refund within {REFUND_WINDOW_DAYS} days of
+        purchase. Change of mind after downloading isn&apos;t covered, because
+        a download can&apos;t be returned.
       </p>
 
       <h2>No-guarantees clause</h2>

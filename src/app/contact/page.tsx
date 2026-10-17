@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { Container } from "@/components/ui";
-import { CONTACT, REFUND_WINDOW_DAYS } from "@/lib/pricing";
+import { CONTACT } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Contact & support",
@@ -34,8 +34,8 @@ export default function ContactPage() {
               </p>
               <p className="mt-2 text-[0.86rem] leading-relaxed text-muted">
                 For download problems, refunds and licensing questions. Include
-                your order ref (from the receipt email) when you have one — it
-                makes replies faster.
+                your order ref (shown on your order confirmation page) when you
+                have one — it makes replies faster.
               </p>
             </a>
 
@@ -46,8 +46,7 @@ export default function ContactPage() {
               <p className="mt-2 text-[0.9rem] leading-relaxed text-muted">
                 Usually the same working day (IST), evenings and weekends
                 included — we run lean and that shows up as responsiveness.
-                Refund requests within the {REFUND_WINDOW_DAYS}-day window are
-                always answered first.
+                Delivery problems are always answered first.
               </p>
             </div>
 
@@ -56,10 +55,9 @@ export default function ContactPage() {
                 Before you write
               </p>
               <p className="mt-2 text-[0.9rem] leading-relaxed text-muted">
-                Download link expired? Every purchase email contains a 30-day
-                link — the text should still be in your inbox under
-                &ldquo;Your ClientFlow Outreach Kit download is ready&rdquo;.
-                We can always reissue it.
+                Download link expired? Your 30-day link is on the order
+                confirmation page you saw after paying — and we can always
+                reissue it.
               </p>
             </div>
           </div>

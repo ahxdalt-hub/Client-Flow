@@ -74,7 +74,7 @@ export async function POST(request: Request) {
   }
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json(
-      { error: "Please enter a valid email — the kit is delivered to it." },
+      { error: "Please enter a valid email address." },
       { status: 400 },
     );
   }
@@ -144,6 +144,9 @@ export async function POST(request: Request) {
       productId: PRODUCT.slug,
       amountPaise,
       currency: PRICING.currency,
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone || undefined,
     });
 
     if (idem) rememberIdem(idem, rpOrder.id, amountPaise);

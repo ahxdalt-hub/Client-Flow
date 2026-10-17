@@ -5,9 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { activePrice, PRICING } from "@/lib/pricing";
+import { PAYMENTS_LIVE } from "@/lib/payments-status";
 import { subscribeScroll } from "@/lib/scroll-loop";
 import { useScrolledPast } from "@/components/motion";
 import { play } from "@/lib/sound";
+import { track } from "@/lib/analytics-client";
 
 /**
  * Sticky purchase bar.
@@ -49,22 +51,26 @@ export function BuyBar() {
             <p className="truncate text-[0.82rem] font-semibold text-ink sm:text-[0.9rem]">
               ClientFlow Outreach Kit
             </p>
+            {/* On a phone the secondary line is price only. A longer string
+                here wraps to three lines and turns an 81px bar into a wall
+                across the bottom of the screen. */}
             <p className="mt-0.5 flex items-center gap-2 text-[0.72rem] text-muted sm:text-[0.78rem]">
               <span className="font-semibold text-ink">₹{activePrice()}</span>
               <s className="opacity-70">₹{PRICING.regular}</s>
-              <span aria-hidden="true">·</span>
-              <span className="hidden sm:inline">
-                one-time · instant download · 10-day refund
+              <span className="hidden truncate sm:inline">
+                {PAYMENTS_LIVE ? " · one-time · instant download" : " · one-time"}
               </span>
-              <span className="sm:hidden">one-time · instant</span>
             </p>
           </div>
 
           <Link
             href="/checkout"
             data-sound="off"
-            onClick={() => play("pop")}
-            className="btn btn-primary inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-5 text-[0.88rem] font-semibold sm:h-11 sm:px-6 sm:text-[0.94rem]"
+            onClick={() => {
+              play("pop");
+              track("purchase_click", { location: "buy-bar" });
+            }}
+            className="btn btn-primary inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-5 text-[0.88rem] font-semibold sm:h-11 sm:px-6 sm:text-[0.94rem]"
           >
             Get the kit
             <svg
@@ -90,7 +96,7 @@ export function BuyBar() {
             }}
             data-sound="off"
             aria-label="Dismiss the buy bar"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-paper hover:text-ink"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-paper hover:text-ink"
           >
             <svg
               width="14"

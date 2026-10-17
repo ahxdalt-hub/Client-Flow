@@ -1,5 +1,7 @@
 import { ImageResponse } from "next/og";
 
+import { activePrice } from "@/lib/pricing";
+
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "ClientFlow Outreach Kit — client acquisition templates for Indian freelancers";
@@ -51,7 +53,7 @@ export default function OpengraphImage() {
             cold month.
           </div>
           <div style={{ marginTop: 24, fontSize: 27, color: MUTED, display: "flex" }}>
-            20 templates &amp; scripts in 6 files — ₹299 introductory
+            20 templates &amp; scripts in 6 files — ₹{activePrice()} introductory
           </div>
         </div>
 

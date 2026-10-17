@@ -4,41 +4,56 @@ import { cacheLife } from "next/cache";
 import { countPaidOrders } from "./orders";
 
 /**
- * The "copies sold" number shown to buyers.
+ * Social proof, without a single invented number.
  *
- * Two sources, and the honest one wins:
+ * There is deliberately **no floor, no seed and no placeholder** in this file.
+ * The buyer count shown on the page is either the real number of paid orders,
+ * or it is not shown at all (see `<ProofChip />`, which falls back to
+ * verifiable facts about the product instead).
  *
- *  1. `countPaidOrders()` — the real count of paid rows in the orders table.
- *  2. `SOLD_COUNT_FLOOR` — a hand-maintained floor, used when the database
- *     isn't reachable (or when a sale was taken on a channel that never wrote
- *     an order row, e.g. a direct UPI transfer). It is a floor, so the live
- *     count always overrides it once it catches up.
+ * Why so strict: "Bought by 200+" with no 200 sales is a misleading
+ * advertisement — Consumer Protection Act 2019 (misleading claims), the CCPA
+ * guidelines, ASCI, and e-commerce rules all bite on exactly this — and it is
+ * the one claim on a storefront a stranger can disprove in a single search.
+ * A new store that says "11 copies sold" is believed. A new store that claims
+ * 200 customers is not. Honesty converts better *and* survives scrutiny.
  *
- * Keep `SOLD_COUNT_FLOOR` at or below the number of copies you can actually
- * account for. It is the one number on this site a buyer might ask you to
- * stand behind — moving it ahead of real sales is the thing to never do.
+ * When real sales exist, this file needs no edit: `getBuyerCount()` picks them
+ * up and `<ProofChip />` upgrades itself automatically.
  */
-export const SOLD_COUNT_FLOOR = 200;
 
-async function livePaidCount(): Promise<number | null> {
+/**
+ * Below this many real buyers, "Bought by N+" oversells what's actually true,
+ * so the chip states product facts instead of a crowd. Lower it only if you
+ * genuinely have that many sales.
+ */
+export const CROWD_THRESHOLD = 25;
+
+/**
+ * Real buyer photos, if you have them — with written permission, cropped
+ * square, and only for people who actually bought. Leave empty and the chip
+ * renders no faces at all (never stock portraits: a stranger's face under a
+ * "bought by" claim is a false endorsement, not a decoration).
+ *
+ *   export const BUYER_AVATARS = ["/images/buyers/ananya.jpg"];
+ */
+export const BUYER_AVATARS: string[] = [];
+
+/**
+ * Real paid order count, cached for an hour so the homepage stays static.
+ * Returns `null` when the database is unconfigured or unreachable — callers
+ * must treat null as "unknown", never as zero.
+ */
+export async function getBuyerCount(): Promise<number | null> {
+  "use cache";
+  cacheLife("hours");
+
   try {
     return await countPaidOrders();
   } catch (error) {
     console.warn("[social-proof] paid count unavailable:", error);
     return null;
   }
-}
-
-/**
- * Real sales count, cached for an hour so the homepage stays fully static.
- * Every visitor sees the same number until the next revalidation.
- */
-export async function getSoldCount(): Promise<number> {
-  "use cache";
-  cacheLife("hours");
-
-  const live = await livePaidCount();
-  return Math.max(live ?? 0, SOLD_COUNT_FLOOR);
 }
 
 /**

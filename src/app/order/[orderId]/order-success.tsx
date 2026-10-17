@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { Button, Container } from "@/components/ui";
 import { play } from "@/lib/sound";
 import { track } from "@/lib/analytics-client";
@@ -24,9 +26,8 @@ export function OrderSuccess({
         </h1>
         <p className="mt-4 text-[0.95rem] leading-relaxed text-muted">
           Download links are tied to your order and expire after 30 days. If
-          you just paid and landed here wrongly, check your email — the
-          current link is in the receipt. Not arrived? Check spam, then still
-          stuck? Talk to us:
+          you just paid and landed here wrongly, or your link has expired,
+          send us your order ref and we&apos;ll sort it out:
         </p>
         <a
           href={`mailto:${CONTACT.email}?subject=Download link problem (order ${orderId})`}
@@ -48,8 +49,7 @@ export function OrderSuccess({
         <p className="mt-4 text-[0.95rem] leading-relaxed text-muted">
           Razorpay has your payment and our records are catching up — usually
           a matter of seconds. Refresh this page in a moment. If it stays
-          stuck for more than a minute, the receipt email is on its way
-          anyway: it contains your permanent download link.
+          stuck for more than a minute, contact support with your order ref.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Button variant="ghost" onClick={() => window.location.reload()}>
@@ -70,8 +70,8 @@ export function OrderSuccess({
       </h1>
       <p className="mt-4 max-w-lg text-[0.95rem] leading-relaxed text-muted">
         Open <strong className="text-ink">README.md</strong> first —
-        it turns the folder into a 7-day plan. The same link is in your
-        inbox, and stays valid for 30 days.
+        it turns the folder into a 7-day plan. This link stays valid for
+        30 days, so bookmark this page.
       </p>
 
       <a
@@ -90,13 +90,25 @@ export function OrderSuccess({
         Download the kit (.zip)
       </a>
 
-      <p className="mt-4 text-[0.78rem] text-muted">
+      <p className="mt-5 text-[0.82rem] leading-relaxed text-muted">
+        Bookmark this page — it stays valid for 30 days and always reissues
+        your download from your order id.
+      </p>
+
+      <p className="mt-3 text-[0.78rem] text-muted">
         Order ref: <span className="font-mono">{orderId}</span> ·{" "}
-        <a
-          href={`mailto:${CONTACT.email}?subject=Resend download link (${orderId})`}
+        <Link
+          href="/recover"
           className="underline underline-offset-2 hover:text-ink"
         >
-          lost the link?
+          find a lost link
+        </Link>{" "}
+        ·{" "}
+        <a
+          href={`mailto:${CONTACT.email}?subject=Download link problem (${orderId})`}
+          className="underline underline-offset-2 hover:text-ink"
+        >
+          email support
         </a>
       </p>
     </Shell>

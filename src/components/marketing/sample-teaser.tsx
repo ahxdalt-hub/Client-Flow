@@ -8,6 +8,7 @@ import { PhotoBackdrop } from "../art/photo-backdrop";
 import { play } from "@/lib/sound";
 import { track } from "@/lib/analytics-client";
 import { PRICING, activePrice } from "@/lib/pricing";
+import { PAYMENTS_LIVE } from "@/lib/payments-status";
 import { FILE_COUNT, HANDBOOK_PAGES } from "@/lib/product-content";
 
 /**
@@ -25,7 +26,7 @@ import { FILE_COUNT, HANDBOOK_PAGES } from "@/lib/product-content";
  * same glass surface as the preview above. The free proof and the ₹299 ask
  * are one continuous object, so the price is read as the next size of the
  * thing the reader is already holding — not as a new pitch. Every number in
- * the bridge comes from product-content.ts; the refund window from pricing.
+ * the bridge comes from product-content.ts.
  */
 
 /** The four things the download genuinely contains, in the order the PDF has them. */
@@ -205,7 +206,7 @@ export function SampleTeaser() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <a
-                href="/downloads/clientflow-sample.zip"
+                href="/downloads/clientflow-sample.pdf"
                 download
                 data-sound="off"
                 onClick={() => {
@@ -220,7 +221,7 @@ export function SampleTeaser() {
                 Download the sample
               </a>
               <span className="text-[0.78rem] text-muted">
-                1 designed PDF · ~310 KB · no signup
+                1 designed PDF · ~500 KB · no signup
               </span>
             </div>
 
@@ -302,14 +303,18 @@ export function SampleTeaser() {
                 </ButtonLink>
 
                 <ul className="mt-4 space-y-2 text-[0.78rem] text-muted">
+                  {PAYMENTS_LIVE ? (
+                    <>
+                      <li className="inline-flex w-full items-center gap-2">
+                        <Tick /> Instant download via Razorpay
+                      </li>
+                      <li className="inline-flex w-full items-center gap-2">
+                        <Tick /> UPI &amp; all major cards
+                      </li>
+                    </>
+                  ) : null}
                   <li className="inline-flex w-full items-center gap-2">
-                    <Tick /> Instant download via Razorpay
-                  </li>
-                  <li className="inline-flex w-full items-center gap-2">
-                    <Tick /> UPI &amp; all major cards
-                  </li>
-                  <li className="inline-flex w-full items-center gap-2">
-                    <Tick /> 10-day refund promise, no questions
+                    <Tick /> 30-day download link
                   </li>
                 </ul>
               </div>

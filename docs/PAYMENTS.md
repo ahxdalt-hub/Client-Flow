@@ -77,10 +77,10 @@ as a workaround — open it with the guardian as the proprietor.
                amount, not refunded
             3. created→paid order transition (conditional = idempotent)
             4. HMAC download token (30-day TTL) issued to buyer
-            5. receipt email via Resend (after response; non-blocking)
+            5. analytics log event (after response; non-blocking)
 
 Razorpay ──POST /api/payments/webhook──▶ (parallel second path)
-   - payment.captured  → same steps 2–5; duplicate callbacks / races with
+   - payment.captured  → same steps 2–4; duplicate callbacks / races with
      the verify route are no-ops (transition returns "already done")
    - refund.processed  → paid→failed (access revoked everywhere)
    - payment.failed    → logged only
@@ -92,6 +92,14 @@ GET /api/download/<orderId>?t=<token>
       otherwise from the private Supabase Storage bucket
       `clientflow-deliverables` (the paid file is not committed to the
       public repo)
+
+Lost-link recovery (buyer closed the tab — no email involved):
+POST /api/recover   ← buyer pastes the Razorpay order/payment id from their receipt
+   1. rate-limited; id pattern-checked (order_/pay_)
+   2. paid order looked up by provider_order_id or provider_payment_id
+   3. fresh HMAC download token issued → buyer downloads on-site
+   GET /order/<orderId> also mints a token for a paid row, so the order page
+   is bookmarkable. Both need Supabase configured (the paid row is the proof).
 ```
 
 Key controls (audit-mapped):
@@ -100,7 +108,7 @@ Key controls (audit-mapped):
 |---|---|
 | Browser never sets price/status | amount computed from `src/lib/pricing.ts` server-side; access decided only from authenticated Razorpay data + paid order row |
 | Webhook signature verification | `verifyRazorpayWebhookSignature` (constant-time compare) |
-| Idempotency / no duplicate charges | checkout idempotency key reuses the same Razorpay order; one payment per Razorpay order by design; `markOrderPaid` created→paid conditional transition; verify + webhook deduplicate fulfillment email |
+| Idempotency / no duplicate charges | checkout idempotency key reuses the same Razorpay order; one payment per Razorpay order by design; `markOrderPaid` created→paid conditional transition makes duplicate fulfilments no-ops |
 | Forged success URL | cannot mint a token (needs `DOWNLOAD_TOKEN_SECRET`); cannot pass verify (HMAC + authenticated fetch) |
 | Credentials server-side | secrets only in `process.env.*`; only the public `NEXT_PUBLIC_RAZORPAY_KEY_ID` reaches the browser |
 | Input validation | regex-gated ids (order_/pay_/hex sig), name/email/phone rules, idem key charset, raw-body size cap, props size cap |
@@ -108,7 +116,8 @@ Key controls (audit-mapped):
 | Safe DB queries | Supabase query builder (parameterised), `.eq()` filters only; no string SQL |
 | Unauthorized file access | bundle outside `/public`, `outputFileTracingIncludes` scoping; token + paid-row checks |
 | No sensitive logging | logs contain order/payment ids and status only — never names, emails, phones, card data, or secrets |
-| Data minimisation | buyer contact stays in Razorpay's payment record (used for the receipt email); our DB stores only order ids, status, amount |
+| Data minimisation | buyer contact stays in Razorpay's payment record (used for the payment receipt); our DB stores only order ids, status, amount |
+| Lost-link recovery | `/recover` looks a paid order up by Razorpay order/payment id and mints a fresh token (no email); `/order/<id>` mints one for a paid row, so the page is bookmarkable |
 | Duplicate delivery events | refunded orders flip to "failed" → download and order pages refuse non-paid rows |
 
 ## 3. Error handling matrix
@@ -117,11 +126,10 @@ Key controls (audit-mapped):
 |---|---|
 | Pending payment (authorised, not captured, sheet still open) | verify returns "Payment not completed" (400); no token; buyer sheet can retry same order |
 | Declined payment | Checkout `payment.failed` → UI error, order stays "created", retry safe (no double order; same idem key reuses order) |
-| Duplicate capture webhook | transition returns already-paid → HTTP 200, no re-email |
-| Duplicate verify submission | second call re-verifies signature, re-issues (fresh) token, skips duplicate email |
+| Duplicate capture webhook | transition returns already-paid → HTTP 200, no duplicate fulfilment |
+| Duplicate verify submission | second call re-verifies signature and re-issues a fresh token; no side effects repeat |
 | Webhook lands before verify | order marked paid by webhook; later verify result is a no-op transition, buyer still gets token |
-| Webhook delayed/lost | verify path alone completes fulfilment; if Supabase write fails the email path still fires — buyer recovers via email link |
-| Email provider failure | logged server-side (`[webhook] fulfilment email not sent`); buyer recovery: order page link (still valid) or support resend; email never blocks the HTTP response |
+| Webhook delayed/lost | verify path alone completes fulfilment; buyer recovers via the order page link (still valid) or support |
 | File unavailable | download route 500 with support-contact message; log shows denied/served counts |
 | Refund | dashboard refund → `refund.processed` webhook → order "failed" → download/order pages revoke; partial refunds are treated as full-revoke (single-SKU product) |
 | Webhook signature failure | HTTP 400, nothing processed; Razorpay does not retry 400/4xx |
@@ -150,9 +158,8 @@ Manual, one-time (needs the human-in-the-loop Razorpay **test** sheet):
 6. Webhook replay of same `payment.captured` twice → second is `alreadyFulfilled`.
 7. Webhook with wrong secret → 400.
 8. Refund the test payment in the dashboard → `refund.processed` → order page/download deny.
-9. With `RESEND_API_KEY` unset → fulfillment is logged server-side, flow still completes.
-10. Keep `pending.properties` where the buyer closes the tab after payment: webhook
-    fulfils and emails anyway.
+9. Keep `pending.properties` where the buyer closes the tab after payment: the
+   webhook fulfils anyway — the buyer's link is on the order page.
 
 Live-mode checklist is in README "Setup checklist for production".
 
@@ -174,13 +181,11 @@ Nothing in this repo can do these — they are account/approval actions:
    reportable within `REFUND_WINDOW_DAYS` (10). Verify the claim against the
    download audit log, then refund it from the dashboard within the same
    window. Change of mind after download is explicitly not covered.
-5. **Email** — set `RESEND_API_KEY` + `EMAIL_FROM` (verified domain) to make
-   receipts automatic instead of logged.
-6. **Domain** — `NEXT_PUBLIC_SITE_URL` is the live domain
+5. **Domain** — `NEXT_PUBLIC_SITE_URL` is the live domain
    (`https://client-flow-inky.vercel.app`, set in Vercel → Environment
    Variables for Production/Preview/Development); receipt and download
    links derive from it. Because it is a `NEXT_PUBLIC_*` value it is
    inlined at build time — change it only with a redeploy.
-7. **Rate limiter caveat** — the in-process limiter is per-instance on
+6. **Rate limiter caveat** — the in-process limiter is per-instance on
    serverless. Broad abuse at scale wants a shared-store limiter (Upstash/Vercel
    KV); the function signature is ready for a drop-in swap.

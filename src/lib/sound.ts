@@ -32,10 +32,12 @@ function shouldEnable(): boolean {
   if (enabled !== null) return enabled;
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    // Default: on. Users can silence via the header toggle.
-    enabled = stored !== "off";
+    // Default: OFF. A storefront should be silent until the visitor asks for
+    // sound — unsolicited UI noise is the fastest way to make a premium page
+    // feel cheap, and it surprises people on phones and in shared rooms.
+    enabled = stored === "on";
   } catch {
-    enabled = true;
+    enabled = false;
   }
   return enabled;
 }

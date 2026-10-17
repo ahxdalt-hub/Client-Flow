@@ -70,3 +70,47 @@ create index if not exists download_log_order_idx
 
 -- After these tables exist, the helpers in src/lib/orders.ts
 -- (logEvent / logDownload) pick them up automatically — no code change.
+
+-- ── Order lookup indexes (checkout / fulfilment / recovery) ─────────
+-- The previous app's `orders` table has no index on these columns, yet
+-- every fulfilment and recovery path looks a row up by one of them:
+--   * /api/payments/verify + /api/payments/webhook  → provider_order_id
+--   * /api/recover (self-serve link recovery)       → provider_order_id
+--                                                     or provider_payment_id
+-- Idempotent; safe to re-run.
+create index if not exists orders_provider_order_id_idx
+  on public.orders (provider_order_id);
+
+create index if not exists orders_provider_payment_id_idx
+  on public.orders (provider_payment_id);
+
+-- ── Customer details on the order (support + easy tracking) ─────────
+-- Name/email/phone are captured at checkout and stored with the order so the
+-- owner can find a buyer by email, reissue a link, and spot repeat customers.
+-- Payment instrument data (card/UPI) is never stored — Razorpay holds that.
+alter table public.orders add column if not exists customer_name  text;
+alter table public.orders add column if not exists customer_email text;
+alter table public.orders add column if not exists customer_phone text;
+
+create index if not exists orders_customer_email_idx
+  on public.orders (lower(customer_email));
+
+-- ── Paid deliverable (private Supabase Storage bucket) ──────────────
+-- `assets/deliverables/` is gitignored, so a Git-based Vercel build does NOT
+-- bundle the paid zip. /api/download therefore streams it from a PRIVATE
+-- Storage bucket, using SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (the service
+-- role bypasses Storage RLS; the signed token + paid-order row in the route
+-- are the only gate). Bucket name must match DELIVERABLE_BUCKET (default
+-- `clientflow-deliverables`).
+--
+-- Create + upload with the bundled script (reads .env.local):
+--     npm run upload:deliverable
+--
+-- Confirm both the tables and the bucket/object with:
+--     npm run health
+--
+-- Storage bucket SQL equivalent (run in the SQL editor; the script does this
+-- via the Storage API automatically):
+--     insert into storage.buckets (id, name, public)
+--     values ('clientflow-deliverables', 'clientflow-deliverables', false)
+--     on conflict (id) do nothing;

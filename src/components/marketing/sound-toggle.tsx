@@ -16,16 +16,16 @@ function subscribe(callback: () => void) {
 
 function getSnapshot(): boolean {
   try {
-    return localStorage.getItem("cf_sound") !== "off";
+    return localStorage.getItem("cf_sound") === "on";
   } catch {
-    return true;
+    return false;
   }
 }
 
 function getServerSnapshot(): boolean {
-  // Pre-hydration default matches sound.ts's default (on), but the icon
-  // renders only after hydration to avoid a misleading muted state.
-  return true;
+  // Must match the client's pre-hydration default (off) to avoid a hydration
+  // mismatch, and so the icon never renders as a misleading "muted" state.
+  return false;
 }
 
 export function SoundToggle() {

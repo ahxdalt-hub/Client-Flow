@@ -5,8 +5,9 @@ import Image from "next/image";
 import { ButtonLink, Container } from "../ui";
 import { Reveal, Magnetic } from "../motion";
 import { Grain } from "../art/ambient";
-import { play } from "@/lib/sound";
-import { track } from "@/lib/analytics-client";
+import { BuyCta } from "./buy-cta";
+import { activePrice } from "@/lib/pricing";
+import { PAYMENTS_LIVE } from "@/lib/payments-status";
 
 /**
  * Final CTA. The emotional close: a warm photograph behind ink, one clear
@@ -45,19 +46,14 @@ export function CtaBand() {
           className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
         >
           <Magnetic className="inline-flex w-full justify-center sm:w-auto" strength={0.18}>
-            <ButtonLink
-              href="/checkout"
+            <BuyCta
+              location="footer-cta"
               variant="accent"
               size="lg"
               className="w-full sm:w-auto"
-              data-sound="off"
-              onClick={() => {
-                play("pop");
-                track("purchase_click", { location: "footer-cta" });
-              }}
             >
-              Get the kit — ₹299
-            </ButtonLink>
+              Get the kit — ₹{activePrice()}
+            </BuyCta>
           </Magnetic>
           <ButtonLink
             href="/sample"
@@ -71,7 +67,7 @@ export function CtaBand() {
 
         <Reveal variant="fade" delay={220} className="mt-6">
           <p className="text-[0.78rem] text-ivory/45">
-            Secure checkout via Razorpay · instant download · 10-day refund promise
+            Secure checkout via Razorpay{PAYMENTS_LIVE ? " · instant download" : ""}
           </p>
         </Reveal>
       </Container>

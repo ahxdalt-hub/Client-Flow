@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { FaqBackdrop, FaqSection } from "@/components/marketing/faq";
 import { ButtonLink, Container, SectionHeading } from "@/components/ui";
+import { faqPageJsonLd } from "@/lib/faq-content";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -13,6 +14,10 @@ export const metadata: Metadata = {
 export default function FaqPage() {
   return (
     <div className="relative isolate overflow-hidden border-b border-line">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd()) }}
+      />
       <FaqBackdrop />
       <Container className="relative py-16 md:py-24">
         <div className="lg:max-w-[34rem]">

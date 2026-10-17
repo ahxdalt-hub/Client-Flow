@@ -13,13 +13,54 @@ import { SampleTeaser } from "@/components/marketing/sample-teaser";
 import { CtaBand } from "@/components/marketing/cta-band";
 import { Section, SectionHeading, Container } from "@/components/ui";
 import { Reveal, Spotlight } from "@/components/motion";
+import { SITE } from "@/config/site";
+import { activePrice, PRICING, PRODUCT } from "@/lib/pricing";
+import { FILE_COUNT, HANDBOOK_PAGES, INCLUDED_FILES } from "@/lib/product-content";
 
 export const metadata: Metadata = {
   title: "ClientFlow Outreach Kit — client acquisition templates for Indian freelancers",
-  description:
-    "Cold email templates, DM scripts, follow-up sequences, proposals and pricing tools built for freelance designers, developers, SEOs, social media managers and agencies in India. ₹299 introductory price.",
+  description: `Cold email templates, DM scripts, follow-up sequences, proposals and pricing tools built for freelance designers, developers, SEOs, social media managers and agencies in India. ₹${activePrice()} introductory price.`,
   alternates: { canonical: "/" },
 };
+
+/**
+ * Product structured data.
+ *
+ * Deliberately has **no `aggregateRating` and no `review`** — those nodes are
+ * the machine-readable version of "200+ customers", and inventing them is both
+ * a Google policy violation (structured data spam) and a misleading claim.
+ * They can be added the day real reviews exist.
+ */
+function productJsonLd() {
+  const url = SITE.url.replace(/\/$/, "");
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: PRODUCT.name,
+    description: PRODUCT.tagline,
+    brand: { "@type": "Brand", name: "ClientFlow" },
+    category: "Business & Productivity Software",
+    image: `${url}/opengraph-image`,
+    offers: {
+      "@type": "Offer",
+      url: `${url}/checkout`,
+      price: String(activePrice()),
+      priceCurrency: PRICING.currency,
+      availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+    // The kit is a bundle, so its parts are worth stating explicitly.
+    additionalProperty: [
+      { "@type": "PropertyValue", name: "Files included", value: String(FILE_COUNT) },
+      { "@type": "PropertyValue", name: "Handbook pages", value: String(HANDBOOK_PAGES) },
+      {
+        "@type": "PropertyValue",
+        name: "File list",
+        value: INCLUDED_FILES.map((f) => f.name).join(", "),
+      },
+    ],
+  };
+}
 
 const AUDIENCES: [string, string][] = [
   ["Freelance designers & developers", "Turn a portfolio site that waits for inbound into outreach that books calls."],
@@ -33,6 +74,10 @@ const AUDIENCES: [string, string][] = [
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd()) }}
+      />
       <Hero />
       <NicheBand />
       <ProofBand />

@@ -64,7 +64,7 @@ function denied(
   orderId: string | null,
   request: Request,
   status = 404,
-  message = "This download link is invalid or has expired. Check your email for the original link, or contact support.",
+  message = "This download link is invalid or has expired. Use the link from your order confirmation page, or contact support.",
 ) {
   void logDownload(orderId, hashIp(clientIp(request)));
   console.warn(`[download] denied (${reason})`, { orderId });
@@ -94,7 +94,7 @@ export async function GET(
       orderId,
       request,
       404,
-      "This download link is invalid or has expired. Check your email for the original link, or contact support for a fresh link.",
+      "This download link is invalid or has expired. Use the link from your order confirmation page, or contact support for a fresh link.",
     );
   }
 
@@ -114,7 +114,7 @@ export async function GET(
         orderId,
         request,
         403,
-        "Payment is still confirming. Give it a minute, refresh, and if it stays stuck email support with your order id.",
+        "Payment is still confirming. Give it a minute, refresh, and if it stays stuck contact support with your order id.",
       );
     }
     if (order.status !== "paid") {

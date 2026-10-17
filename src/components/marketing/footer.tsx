@@ -23,6 +23,7 @@ const COLUMNS: {
     title: "Help",
     links: [
       { href: "/contact", label: "Support" },
+      { href: "/recover", label: "Recover a download" },
       { href: "/refund-policy", label: "Refund policy" },
       { href: "/faq", label: "FAQ" },
     ],
