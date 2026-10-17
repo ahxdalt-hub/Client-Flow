@@ -9,8 +9,6 @@ import { getEventStats, getRevenueSeries } from "@/lib/admin-data";
 import { FUNNEL_EVENTS } from "@/lib/orders";
 import { connection } from "next/server";
 
-export const instant = false;
-
 export default async function AdminAnalyticsPage() {
   await connection();
   const [events, revenue] = await Promise.all([getEventStats(14), getRevenueSeries(14)]);

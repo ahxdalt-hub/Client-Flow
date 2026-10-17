@@ -9,8 +9,6 @@ import {
   isValidAdminCookie,
 } from "@/lib/admin-auth";
 
-export const instant = false;
-
 export const metadata: Metadata = {
   title: "Store admin",
   robots: { index: false, follow: false },

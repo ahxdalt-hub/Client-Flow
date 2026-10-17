@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { createHash } from "node:crypto";
 import { NextResponse, after } from "next/server";
 
@@ -7,31 +5,20 @@ import { verifyDownloadToken } from "@/lib/tokens";
 import { findOrderByRazorpayId, logDownload, ORDER_STATUS_CREATED } from "@/lib/orders";
 import { CONTACT, DELIVERY } from "@/lib/pricing";
 
-// Deliverable zip lives outside /public so it's never directly URL-accessible.
-// Contents/manifest source of truth: DELIVERY in src/lib/pricing.ts — keep the
-// literal segments here in sync so the build's static file tracing stays scoped.
-const FILE_DIR = path.join(process.cwd(), "assets", "deliverables");
+// The paid bundle is deliberately kept out of the public git repo, so it is
+// never bundled with a deployment. It streams from a PRIVATE Supabase Storage
+// object — object storage is the delivery path everywhere (Cloudflare Workers
+// have no filesystem). The gate below (signed token + paid order row) is the
+// only authorisation; the service role bypasses Storage RLS only server-side.
 const FILE_NAME = DELIVERY.paidBundleFile;
-
-// The paid bundle is deliberately kept out of the public git repo (committing
-// it would hand the product away). On Vercel the Git-based build therefore has
-// no local copy, so the handler falls back to a private Supabase Storage
-// object — the gate above (signed token + paid order row) still applies to
-// both sources.
 const STORAGE_BUCKET = process.env.DELIVERABLE_BUCKET ?? "clientflow-deliverables";
 
-/** The paid zip, from the bundled copy when present, else private Storage. */
+/** The paid zip, from the private Supabase Storage bucket. */
 async function loadPaidBundle(): Promise<Uint8Array> {
-  try {
-    return new Uint8Array(await readFile(path.join(FILE_DIR, FILE_NAME)));
-  } catch {
-    // Not bundled with this deployment — fall through to object storage.
-  }
-
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    throw new Error("paid bundle missing locally and Supabase Storage is not configured");
+    throw new Error("Supabase Storage is not configured");
   }
   const res = await fetch(
     `${url}/storage/v1/object/${STORAGE_BUCKET}/${FILE_NAME}`,

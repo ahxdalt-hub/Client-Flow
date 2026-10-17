@@ -14,8 +14,6 @@ import {
 } from "@/components/admin/ui";
 import { getOrderDetail } from "@/lib/admin-data";
 
-export const instant = false;
-
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>

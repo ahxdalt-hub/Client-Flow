@@ -3,8 +3,6 @@ import { connection } from "next/server";
 import { Card, Empty, PageHeading, formatIst, inr, relTime } from "@/components/admin/ui";
 import { listCustomers } from "@/lib/admin-data";
 
-export const instant = false;
-
 export default async function AdminCustomersPage() {
   await connection();
   const customers = await listCustomers();

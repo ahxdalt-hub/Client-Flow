@@ -20,8 +20,6 @@ import {
 } from "@/lib/admin-data";
 import { FUNNEL_EVENTS, getStoreOverview } from "@/lib/orders";
 
-export const instant = false;
-
 const ADMIN_NAME = process.env.ADMIN_NAME ?? "Ahxd";
 const SALES_TARGET = 50;
 const REVENUE_TARGET_PAISE = 25_000 * 100;

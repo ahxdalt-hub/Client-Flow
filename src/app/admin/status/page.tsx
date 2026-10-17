@@ -4,8 +4,6 @@ import { DOWNLOAD_TOKEN_TTL_SECONDS, WEBSITE_URL } from "@/lib/config";
 import { DELIVERY, REFUND_WINDOW_DAYS, activePrice } from "@/lib/pricing";
 import { connection } from "next/server";
 
-export const instant = false;
-
 const TONE: Record<StatusCheck["level"], string> = {
   pass: "bg-accent-tint text-accent",
   warn: "bg-amber-100 text-amber-700",

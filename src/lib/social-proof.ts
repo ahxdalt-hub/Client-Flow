@@ -1,5 +1,4 @@
 import "server-only";
-import { cacheLife } from "next/cache";
 
 import { countPaidOrders } from "./orders";
 
@@ -40,16 +39,23 @@ export const CROWD_THRESHOLD = 25;
 export const BUYER_AVATARS: string[] = [];
 
 /**
- * Real paid order count, cached for an hour so the homepage stays static.
- * Returns `null` when the database is unconfigured or unreachable — callers
- * must treat null as "unknown", never as zero.
+ * Real paid order count. Cached briefly in-isolate so a burst of homepage hits
+ * doesn't hammer Supabase (the Workers runtime has no shared cache here — see
+ * the Cache Components note in next.config.ts). Returns `null` when the
+ * database is unconfigured or unreachable — callers must treat null as
+ * "unknown", never as zero.
  */
-export async function getBuyerCount(): Promise<number | null> {
-  "use cache";
-  cacheLife("hours");
+const BUYER_COUNT_TTL_MS = 5 * 60 * 1000;
+let buyerCountCache: { value: number | null; at: number } | null = null;
 
+export async function getBuyerCount(): Promise<number | null> {
+  if (buyerCountCache && Date.now() - buyerCountCache.at < BUYER_COUNT_TTL_MS) {
+    return buyerCountCache.value;
+  }
   try {
-    return await countPaidOrders();
+    const value = await countPaidOrders();
+    buyerCountCache = { value, at: Date.now() };
+    return value;
   } catch (error) {
     console.warn("[social-proof] paid count unavailable:", error);
     return null;

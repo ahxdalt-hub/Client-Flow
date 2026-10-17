@@ -13,8 +13,6 @@ import {
 } from "@/components/admin/ui";
 import { ORDER_STATUSES, listOrders, parseStatus } from "@/lib/admin-data";
 
-export const instant = false;
-
 export default async function AdminOrdersPage({
   searchParams,
 }: {

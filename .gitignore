@@ -49,6 +49,12 @@ build.log
 # supabase cli local state
 /supabase/.temp/
 
+# cloudflare / opennext
+/.open-next/
+/.wrangler/
+.dev.vars
+cloudflare-env.d.ts
+
 # Paid product. These live outside /public on purpose so they are served only
 # through the verified /api/download route. Committing them to a public repo
 # would hand the product away for free, bypassing checkout entirely.

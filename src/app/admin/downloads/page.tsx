@@ -11,8 +11,6 @@ import {
 } from "@/components/admin/ui";
 import { listDownloads } from "@/lib/admin-data";
 
-export const instant = false;
-
 export default async function AdminDownloadsPage({
   searchParams,
 }: {
