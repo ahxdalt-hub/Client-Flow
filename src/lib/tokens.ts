@@ -5,16 +5,23 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * Token format: `<orderId>.<expiryUnix>.<hmac>` — base64url, no server state needed.
  * Intentionally dependency-free (no "server-only" guard) so it is unit-testable:
  * it contains no secrets itself and is only ever called from server code.
+ *
+ * The secret is read lazily on every call, never at module scope: on Cloudflare
+ * Workers the environment is bound per request, so a module-scope read would
+ * capture an empty value and every token would be minted with no key.
  */
 
-const secret =
-  process.env.DOWNLOAD_TOKEN_SECRET ?? process.env.DOWNLOAD_TOKENS_SECRET;
+function getSecret(): string {
+  return (
+    process.env.DOWNLOAD_TOKEN_SECRET ?? process.env.DOWNLOAD_TOKENS_SECRET ?? ""
+  );
+}
 
 const hmac = (payload: string) =>
-  createHmac("sha256", secret ?? "").update(payload).digest("base64url");
+  createHmac("sha256", getSecret()).update(payload).digest("base64url");
 
 export function createDownloadToken(orderId: string, ttlSeconds: number) {
-  if (!secret) throw new Error("DOWNLOAD_TOKEN_SECRET is not configured");
+  if (!getSecret()) throw new Error("DOWNLOAD_TOKEN_SECRET is not configured");
   const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
   const sig = hmac(`${orderId}.${exp}`);
   return `${orderId}.${exp}.${sig}`;
@@ -24,7 +31,7 @@ export function verifyDownloadToken(
   token: string,
   expectedOrderId?: string,
 ): { ok: true; orderId: string } | { ok: false; reason: string } {
-  if (!secret) return { ok: false, reason: "server-misconfigured" };
+  if (!getSecret()) return { ok: false, reason: "server-misconfigured" };
   const parts = token.split(".");
   if (parts.length !== 3) return { ok: false, reason: "malformed" };
 

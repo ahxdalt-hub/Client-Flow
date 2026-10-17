@@ -1,7 +1,19 @@
 import "server-only";
 
-const KEY_ID = process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+/**
+ * Razorpay REST helpers. Only used when PAYMENT_PROVIDER=razorpay.
+ *
+ * All env reads are lazy (per call): on Cloudflare Workers the environment is
+ * bound per request, so module-scope reads would capture nothing.
+ */
+
+function keyId(): string {
+  return process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
+}
+
+function keySecret(): string {
+  return process.env.RAZORPAY_KEY_SECRET ?? "";
+}
 
 export type RazorpayOrder = {
   id: string;
@@ -11,14 +23,14 @@ export type RazorpayOrder = {
 };
 
 export function isRazorpayConfigured() {
-  return Boolean(KEY_ID && KEY_SECRET);
+  return Boolean(keyId() && keySecret());
 }
 
 function authHeader() {
-  if (!KEY_ID || !KEY_SECRET) {
+  if (!keyId() || !keySecret()) {
     throw new Error("Razorpay keys are not configured");
   }
-  const basic = Buffer.from(`${KEY_ID}:${KEY_SECRET}`).toString("base64");
+  const basic = Buffer.from(`${keyId()}:${keySecret()}`).toString("base64");
   return `Basic ${basic}`;
 }
 
@@ -73,9 +85,7 @@ export type RazorpayPayment = {
 
 /**
  * Authenticated payment fetch — the authoritative check that a payment is
- * captured, belongs to the order, and carries the expected amount. Used by
- * /api/payments/verify, the refund webhook (payment → order_id resolution)
- * and the idempotent checkout cache.
+ * captured, belongs to the order, and carries the expected amount.
  */
 export async function fetchRazorpayPayment(
   paymentId: string,
@@ -95,5 +105,5 @@ export function razorpayPublicKeyId() {
 
 /** Server-side key id (falls back to the public env var for local dev). */
 export function razorpayKeyId() {
-  return KEY_ID ?? "";
+  return keyId();
 }

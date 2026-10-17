@@ -60,7 +60,8 @@ export type OrderRow = {
 export const ORDER_STATUS_CREATED = "created";
 
 export async function createPendingOrder(input: {
-  razorpayOrderId: string;
+  providerOrderId: string;
+  provider?: string;
   productId: string;
   amountPaise: number;
   currency: string;
@@ -72,8 +73,8 @@ export async function createPendingOrder(input: {
   if (!db) return { stored: false };
   const { error } = await db.from("orders").insert({
     id: crypto.randomUUID(),
-    provider: "razorpay",
-    provider_order_id: input.razorpayOrderId,
+    provider: input.provider ?? "razorpay",
+    provider_order_id: input.providerOrderId,
     product_id: input.productId,
     status: ORDER_STATUS_CREATED,
     amount_paise: input.amountPaise,

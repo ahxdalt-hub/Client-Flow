@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { PRICING, amountInPaise, PRODUCT } from "@/lib/pricing";
+import { createDodoCheckoutSession, isDodoConfigured } from "@/lib/dodo";
+import { paymentProvider, WEBSITE_URL } from "@/lib/config";
 import {
   createRazorpayOrder,
   fetchRazorpayOrder,
@@ -96,6 +98,55 @@ export async function POST(request: Request) {
   // client's request body cannot influence it.
   const amountPaise = amountInPaise(PRICING.introActive ? PRICING.intro : PRICING.regular);
 
+  // ── Dodo Payments (Merchant of Record) — hosted checkout ────────────
+  // We mint our own order id, store the pending row, and hand the buyer to
+  // Dodo's hosted page. Return/webhook reconciliation is keyed on
+  // metadata.order_id, so the order id — not Dodo's — stays the single key
+  // the download token binds to.
+  if (paymentProvider() === "dodo") {
+    if (!isDodoConfigured()) {
+      return NextResponse.json(
+        { error: "Payments are not configured on this deployment yet." },
+        { status: 503 },
+      );
+    }
+    const orderId = `cf_${(idem || Date.now().toString(36)).slice(0, 24)}_${crypto
+      .randomUUID()
+      .slice(0, 8)}`;
+    try {
+      await createPendingOrder({
+        providerOrderId: orderId,
+        provider: "dodo",
+        productId: PRODUCT.slug,
+        amountPaise,
+        currency: PRICING.currency,
+        customerName: name,
+        customerEmail: email,
+        customerPhone: phone || undefined,
+      });
+
+      const session = await createDodoCheckoutSession({
+        email,
+        name,
+        orderId,
+        returnUrl: `${WEBSITE_URL.replace(/\/+$/, "")}/order/${orderId}`,
+      });
+      if (!session.checkout_url) throw new Error("Dodo returned no checkout_url");
+
+      return NextResponse.json({
+        provider: "dodo",
+        orderId,
+        checkoutUrl: session.checkout_url,
+      });
+    } catch (error) {
+      console.error("[checkout] dodo failed:", error);
+      return NextResponse.json(
+        { error: "Could not start the checkout. Please try again." },
+        { status: 502 },
+      );
+    }
+  }
+
   // 1. Idempotent replay: same key, cached payable order still exists at
   //    Razorpay → return it instead of creating a duplicate.
   if (idem) {
@@ -140,7 +191,7 @@ export async function POST(request: Request) {
 
     // Persist intent (no-op if Supabase isn't configured)
     await createPendingOrder({
-      razorpayOrderId: rpOrder.id,
+      providerOrderId: rpOrder.id,
       productId: PRODUCT.slug,
       amountPaise,
       currency: PRICING.currency,

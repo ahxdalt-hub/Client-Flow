@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 
 import { DOWNLOAD_TOKEN_TTL_SECONDS } from "@/lib/config";
-import { findOrderByRazorpayId, ORDER_STATUS_CREATED } from "@/lib/orders";
+import { findOrderByRazorpayId, markOrderPaid, ORDER_STATUS_CREATED } from "@/lib/orders";
+import { fetchDodoPayment } from "@/lib/dodo";
 import { createDownloadToken, verifyDownloadToken } from "@/lib/tokens";
 import { OrderSuccess } from "./order-success";
 
@@ -40,15 +41,17 @@ async function OrderContent({
   searchParams,
 }: {
   params: Promise<{ orderId: string }>;
-  searchParams: Promise<{ t?: string | string[] }>;
+  searchParams: Promise<{ t?: string | string[]; payment_id?: string | string[]; status?: string | string[] }>;
 }) {
   // Order status is inherently per-request: opt this subtree out of
   // static prerendering so token-expiry math (Date.now) is legal here.
   await connection();
 
   const { orderId } = await params;
-  const t = (await searchParams).t;
+  const sp = await searchParams;
+  const t = sp.t;
   const urlToken = Array.isArray(t) ? t[0] : t ?? "";
+  const paymentIdParam = Array.isArray(sp.payment_id) ? sp.payment_id[0] : sp.payment_id ?? "";
 
   let token = urlToken;
   let status: "ready" | "pending" | "invalid" = "invalid";
@@ -63,8 +66,28 @@ async function OrderContent({
       // the signed token alone, exactly as before.
       status = tokenOk ? "ready" : "invalid";
     } else if (order.status === ORDER_STATUS_CREATED) {
-      // Possible race: verification/webhook hasn't committed yet.
-      status = "pending";
+      // Dodo returns the buyer here with ?payment_id=… — confirm with Dodo's
+      // authenticated API (never the URL) and fulfil on the spot.
+      let settled = false;
+      if (order.provider === "dodo" && paymentIdParam) {
+        try {
+          const pay = await fetchDodoPayment(paymentIdParam);
+          const matches = (pay?.metadata?.order_id ?? orderId) === orderId;
+          if (pay && pay.status === "succeeded" && matches) {
+            await markOrderPaid({
+              razorpayOrderId: orderId,
+              razorpayPaymentId: paymentIdParam,
+            });
+            token = createDownloadToken(orderId, DOWNLOAD_TOKEN_TTL_SECONDS);
+            status = "ready";
+            settled = true;
+          }
+        } catch (error) {
+          console.warn("[order] dodo confirm failed:", error);
+        }
+      }
+      // Possible race: the webhook hasn't committed yet.
+      if (!settled) status = "pending";
     } else if (order.status === "paid") {
       // Bookmarkable link: if the URL wasn't already signed, mint a fresh
       // token from the paid order row. This is what lets a buyer who closed
