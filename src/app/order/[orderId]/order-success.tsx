@@ -11,13 +11,16 @@ type Status = "ready" | "pending" | "invalid";
 
 export function OrderSuccess({
   orderId,
+  orderCode,
   token,
   status,
 }: {
   orderId: string;
+  orderCode?: string | null;
   token: string;
   status: Status;
 }) {
+  const code = orderCode || orderId;
   if (status === "invalid") {
     return (
       <Shell>
@@ -47,9 +50,10 @@ export function OrderSuccess({
           Almost there — confirming your payment.
         </h1>
         <p className="mt-4 text-[0.95rem] leading-relaxed text-muted">
-          Razorpay has your payment and our records are catching up — usually
-          a matter of seconds. Refresh this page in a moment. If it stays
-          stuck for more than a minute, contact support with your order ref.
+          Your payment is being confirmed by our payment provider — usually a
+          matter of seconds. Refresh this page in a moment. If it stays stuck
+          for more than a minute, contact support with your order code{" "}
+          <span className="font-mono text-ink">{code}</span>.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Button variant="ghost" onClick={() => window.location.reload()}>
@@ -92,8 +96,21 @@ export function OrderSuccess({
 
       <p className="mt-5 text-[0.82rem] leading-relaxed text-muted">
         Bookmark this page — it stays valid for 30 days and always reissues
-        your download from your order id.
+        your download from your order code.
       </p>
+
+      <div className="mt-5 rounded-xl border border-line bg-ivory px-4 py-3">
+        <p className="text-[0.7rem] uppercase tracking-wider text-muted">
+          Your order code
+        </p>
+        <p className="mt-1 font-mono text-[1.2rem] font-semibold tracking-wide text-ink">
+          {code}
+        </p>
+        <p className="mt-1 text-[0.75rem] text-muted">
+          Quote this in any support or refund request — we can look your order
+          up from it instantly.
+        </p>
+      </div>
 
       <p className="mt-3 text-[0.78rem] text-muted">
         Order ref: <span className="font-mono">{orderId}</span> ·{" "}
@@ -105,7 +122,7 @@ export function OrderSuccess({
         </Link>{" "}
         ·{" "}
         <a
-          href={`mailto:${CONTACT.email}?subject=Download link problem (${orderId})`}
+          href={`mailto:${CONTACT.email}?subject=Support (${code})`}
           className="underline underline-offset-2 hover:text-ink"
         >
           email support

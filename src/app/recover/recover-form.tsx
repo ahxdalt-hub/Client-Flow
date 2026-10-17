@@ -83,7 +83,7 @@ export function RecoverForm() {
         htmlFor="recover-reference"
         className="mb-1.5 block text-[0.82rem] font-semibold text-ink"
       >
-        Razorpay order or payment id
+        Order code or payment id
       </label>
       <input
         id="recover-reference"
@@ -91,7 +91,7 @@ export function RecoverForm() {
         type="text"
         autoComplete="off"
         spellCheck={false}
-        placeholder="order_XXXXXXXXXXXXXX or pay_XXXXXXXXXXXXXX"
+        placeholder="CF-7K2M9Q or pay_XXXXXXXXXXXXXX"
         required
         onFocus={() => play("click")}
         className="h-12 w-full rounded-xl border border-line-strong bg-paper px-4 font-mono text-[0.9rem] text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-accent focus:ring-2 focus:ring-accent/20"

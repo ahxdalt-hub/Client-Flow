@@ -65,7 +65,7 @@ export async function listOrders(opts: {
   const term = safeSearchTerm(opts.q ?? "");
   if (term) {
     query = query.or(
-      `provider_order_id.ilike.*${term}*,provider_payment_id.ilike.*${term}*,customer_email.ilike.*${term}*`,
+      `provider_order_id.ilike.*${term}*,provider_payment_id.ilike.*${term}*,customer_email.ilike.*${term}*,order_code.ilike.*${term}*`,
     );
   }
 

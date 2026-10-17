@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { PRICING, amountInPaise, PRODUCT } from "@/lib/pricing";
 import { createDodoCheckoutSession, isDodoConfigured } from "@/lib/dodo";
+import { generateOrderCode } from "@/lib/order-code";
 import { paymentProvider, WEBSITE_URL } from "@/lib/config";
 import {
   createRazorpayOrder,
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
     const orderId = `cf_${(idem || Date.now().toString(36)).slice(0, 24)}_${crypto
       .randomUUID()
       .slice(0, 8)}`;
+    const orderCode = generateOrderCode();
     try {
       await createPendingOrder({
         providerOrderId: orderId,
@@ -123,12 +125,14 @@ export async function POST(request: Request) {
         customerName: name,
         customerEmail: email,
         customerPhone: phone || undefined,
+        orderCode,
       });
 
       const session = await createDodoCheckoutSession({
         email,
         name,
         orderId,
+        orderCode,
         returnUrl: `${WEBSITE_URL.replace(/\/+$/, "")}/order/${orderId}`,
       });
       if (!session.checkout_url) throw new Error("Dodo returned no checkout_url");
@@ -136,6 +140,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         provider: "dodo",
         orderId,
+        orderCode,
         checkoutUrl: session.checkout_url,
       });
     } catch (error) {
@@ -198,6 +203,7 @@ export async function POST(request: Request) {
       customerName: name,
       customerEmail: email,
       customerPhone: phone || undefined,
+      orderCode: generateOrderCode(),
     });
 
     if (idem) rememberIdem(idem, rpOrder.id, amountPaise);

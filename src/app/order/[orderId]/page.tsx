@@ -55,12 +55,14 @@ async function OrderContent({
 
   let token = urlToken;
   let status: "ready" | "pending" | "invalid" = "invalid";
+  let orderCode: string | null = null;
 
   // A valid signed token in the URL always authorises a download.
   const tokenOk = verifyDownloadToken(urlToken, orderId).ok;
 
   try {
     const order = await findOrderByRazorpayId(orderId);
+    orderCode = order?.order_code ?? null;
     if (!order) {
       // No row (Supabase unconfigured, or an unknown order id): fall back to
       // the signed token alone, exactly as before.
@@ -105,5 +107,5 @@ async function OrderContent({
     status = tokenOk ? "ready" : "invalid";
   }
 
-  return <OrderSuccess orderId={orderId} token={token} status={status} />;
+  return <OrderSuccess orderId={orderId} orderCode={orderCode} token={token} status={status} />;
 }

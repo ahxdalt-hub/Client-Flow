@@ -95,7 +95,7 @@ export default async function AdminOrdersPage({
                 <tr>
                   <th className="px-4 py-3 font-semibold">Created</th>
                   <th className="px-4 py-3 font-semibold">Customer</th>
-                  <th className="px-4 py-3 font-semibold">Order</th>
+                  <th className="px-4 py-3 font-semibold">Code / order</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 text-right font-semibold">Amount</th>
                 </tr>
@@ -121,14 +121,17 @@ export default async function AdminOrdersPage({
                           {order.customer_email ?? "—"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-ink">
+                      <td className="px-4 py-3">
                         <Link
                           href={`/admin/orders/${order.provider_order_id ?? order.id}`}
                           prefetch={false}
-                          className="hover:text-accent hover:underline"
+                          className="font-mono text-[0.82rem] font-semibold text-ink hover:text-accent hover:underline"
                         >
-                          {shortId(order.provider_order_id)}
+                          {order.order_code ?? "—"}
                         </Link>
+                        <span className="block font-mono text-[0.68rem] text-muted">
+                          {shortId(order.provider_order_id)}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <StatusPill status={order.status} />

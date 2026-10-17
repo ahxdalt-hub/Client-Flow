@@ -88,6 +88,11 @@ export default async function AdminOrderDetailPage({
               <Mono>{order.customer_email ?? "—"}</Mono>
             </Field>
             <Field label="Phone">{order.customer_phone ?? "—"}</Field>
+            <Field label="Order code">
+              <span className="font-mono text-[1rem] font-semibold tracking-wide">
+                {order.order_code ?? "—"}
+              </span>
+            </Field>
             <Field label="Order id">
               <Mono>{order.provider_order_id ?? "—"}</Mono>
             </Field>
@@ -111,6 +116,34 @@ export default async function AdminOrderDetailPage({
           </p>
           <div className="mt-4">
             <ReissueButton reference={ref} />
+          </div>
+
+          {/* Refund cross-check: the same identifiers appear in the gateway,
+              so a refund request can be confirmed against it before acting. */}
+          <div className="mt-5 border-t border-line pt-4">
+            <p className="eyebrow !text-[0.62rem]">Refund cross-check</p>
+            <dl className="mt-2 space-y-1.5 text-[0.78rem]">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Order code</dt>
+                <dd className="font-mono text-ink">{order.order_code ?? "—"}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Provider</dt>
+                <dd className="text-ink">{order.provider ?? "—"}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Payment id</dt>
+                <dd className="truncate font-mono text-ink">
+                  {order.provider_payment_id ?? "—"}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-[0.72rem] leading-relaxed text-muted">
+              To refund: find this <strong>payment id</strong> (or the order
+              code) in your payment provider&apos;s dashboard, issue the refund
+              there — access is revoked automatically when the refund webhook
+              arrives.
+            </p>
           </div>
         </Card>
       </div>

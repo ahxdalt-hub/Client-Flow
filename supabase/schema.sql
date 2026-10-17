@@ -92,8 +92,16 @@ alter table public.orders add column if not exists customer_name  text;
 alter table public.orders add column if not exists customer_email text;
 alter table public.orders add column if not exists customer_phone text;
 
+-- A short, human-friendly code the buyer can quote for support/refunds
+-- (e.g. CF-7K2M9Q). Also mirrored into the Dodo payment metadata so a
+-- refund can be cross-checked against the gateway.
+alter table public.orders add column if not exists order_code text;
+
 create index if not exists orders_customer_email_idx
   on public.orders (lower(customer_email));
+
+create index if not exists orders_order_code_idx
+  on public.orders (order_code);
 
 -- ── Paid deliverable (private Supabase Storage bucket) ──────────────
 -- `assets/deliverables/` is gitignored, so a Git-based Vercel build does NOT

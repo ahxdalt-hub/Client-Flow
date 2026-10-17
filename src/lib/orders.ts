@@ -51,6 +51,7 @@ export type OrderRow = {
   customer_name: string | null;
   customer_email: string | null;
   customer_phone: string | null;
+  order_code: string | null;
   created_at: string | null;
   paid_at: string | null;
   updated_at: string | null;
@@ -68,6 +69,7 @@ export async function createPendingOrder(input: {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
+  orderCode?: string;
 }): Promise<{ stored: boolean }> {
   const db = client();
   if (!db) return { stored: false };
@@ -79,6 +81,7 @@ export async function createPendingOrder(input: {
     status: ORDER_STATUS_CREATED,
     amount_paise: input.amountPaise,
     currency: input.currency,
+    order_code: input.orderCode ?? null,
     // Buyer details, stored so the owner can find the order by email and
     // reissue links. Never payment-instrument data.
     customer_name: input.customerName ?? null,
@@ -128,6 +131,29 @@ export async function findOrderByRazorpayPaymentId(
     return null;
   }
   return data;
+}
+
+/**
+ * Resolve a *paid* order from an order code (CF-XXXXXX). Used by recovery and
+ * support cross-checks: the buyer quotes the code they were shown.
+ */
+export async function findPaidOrderByCode(
+  code: string,
+): Promise<OrderRow | null> {
+  const db = client();
+  if (!db) return null;
+  const { data, error } = await db
+    .from("orders")
+    .select("*")
+    .eq("order_code", code.trim().toUpperCase())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<OrderRow>();
+  if (error) {
+    console.warn("[orders] code fetch failed:", error.message);
+    return null;
+  }
+  return data && data.status === "paid" ? data : null;
 }
 
 /**

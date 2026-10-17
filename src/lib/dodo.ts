@@ -45,6 +45,7 @@ export async function createDodoCheckoutSession(input: {
   email: string;
   name: string;
   orderId: string;
+  orderCode?: string;
   returnUrl: string;
 }): Promise<DodoCheckoutSession> {
   const res = await fetch(`${baseUrl()}/checkouts`, {
@@ -57,7 +58,10 @@ export async function createDodoCheckoutSession(input: {
       product_cart: [{ product_id: dodoProductId(), quantity: 1 }],
       customer: { email: input.email, name: input.name },
       return_url: input.returnUrl,
-      metadata: { order_id: input.orderId },
+      metadata: {
+        order_id: input.orderId,
+        ...(input.orderCode ? { order_code: input.orderCode } : {}),
+      },
     }),
   });
   if (!res.ok) {

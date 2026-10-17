@@ -23,10 +23,10 @@ export default function RecoverPage() {
           </h1>
           <p className="mt-6 text-[1rem] leading-relaxed text-muted">
             Your link lives in the URL you saw after paying. If you lost it,
-            paste the order or payment id from your Razorpay payment receipt
-            (it starts with <span className="font-mono">order_</span> or{" "}
-            <span className="font-mono">pay_</span>) and we&apos;ll issue a
-            fresh link for the same purchase.
+            paste your order code (it looks like{" "}
+            <span className="font-mono">CF-7K2M9Q</span>) or the payment id from
+            your receipt, and we&apos;ll issue a fresh link for the same
+            purchase.
           </p>
 
           <div className="mt-8">

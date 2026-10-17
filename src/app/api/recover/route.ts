@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { DOWNLOAD_TOKEN_TTL_SECONDS } from "@/lib/config";
-import { findPaidOrderByReference, isSupabaseConfigured } from "@/lib/orders";
+import {
+  findPaidOrderByCode,
+  findPaidOrderByReference,
+  isSupabaseConfigured,
+} from "@/lib/orders";
+import { isOrderCode, normalizeOrderCode } from "@/lib/order-code";
 import { parseRazorpayReference } from "@/lib/razorpay-ids";
 import { createDownloadToken } from "@/lib/tokens";
 import { RATE_LIMITS, checkRateLimit, clientIp } from "@/lib/rate-limit";
@@ -34,12 +39,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const parsed = parseRazorpayReference(body.reference ?? "");
-  if (!parsed) {
+  const raw = (body.reference ?? "").trim();
+  if (!isOrderCode(raw) && !parseRazorpayReference(raw)) {
     return NextResponse.json(
       {
         error:
-          "That doesn't look like a Razorpay id. It starts with order_ or pay_ — check your payment receipt.",
+          "That doesn't look like an order code or payment id. Use the code we showed you (CF-XXXXXX) or the payment id from your receipt.",
       },
       { status: 400 },
     );
@@ -56,7 +61,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const order = await findPaidOrderByReference(parsed.value);
+    const order = isOrderCode(raw)
+      ? await findPaidOrderByCode(normalizeOrderCode(raw))
+      : await findPaidOrderByReference(parseRazorpayReference(raw)!.value);
     if (!order?.provider_order_id) {
       return NextResponse.json(
         {
