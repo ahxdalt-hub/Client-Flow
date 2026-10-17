@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -12,6 +11,14 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  /**
+   * The paid deliverable zip lives outside /public and is only served
+   * through the verified /api/download route. This makes sure the file
+   * is bundled with the handler on serverless deployments.
+   */
+  outputFileTracingIncludes: {
+    "/api/download/**": ["./assets/deliverables/**"],
   },
 };
 
