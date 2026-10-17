@@ -15,8 +15,7 @@
     }
   ],
   "routes": [
-    { "pattern": "caelmont.in", "custom_domain": true },
-    { "pattern": "www.caelmont.in", "custom_domain": true }
+    { "pattern": "clientflow.caelmont.in", "custom_domain": true }
   ],
   "workers_dev": true,
   "preview_urls": false,
