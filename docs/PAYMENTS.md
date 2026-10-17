@@ -171,8 +171,11 @@ Nothing in this repo can do these — they are account/approval actions:
    from the dashboard within the same window.
 5. **Email** — set `RESEND_API_KEY` + `EMAIL_FROM` (verified domain) to make
    receipts automatic instead of logged.
-6. **Domain** — set `NEXT_PUBLIC_SITE_URL` to the live domain; receipt
-   links derive from it.
+6. **Domain** — `NEXT_PUBLIC_SITE_URL` is the live domain
+   (`https://client-flow-inky.vercel.app`, set in Vercel → Environment
+   Variables for Production/Preview/Development); receipt and download
+   links derive from it. Because it is a `NEXT_PUBLIC_*` value it is
+   inlined at build time — change it only with a redeploy.
 7. **Rate limiter caveat** — the in-process limiter is per-instance on
    serverless. Broad abuse at scale wants a shared-store limiter (Upstash/Vercel
    KV); the function signature is ready for a drop-in swap.

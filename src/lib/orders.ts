@@ -207,9 +207,9 @@ export async function revokeOrderAccess(
 }
 
 /**
- * First-party analytics. No events table exists on this deployment yet
- * (see supabase/schema.sql) — events are logged to the server console so
- * the flow is visible without failing.
+ * First-party analytics. The `analytics_events` table is created by
+ * supabase/schema.sql; until it exists, events are logged to the server
+ * console so the flow is visible without failing.
  */
 export async function logEvent(
   event: string,
@@ -228,6 +228,13 @@ export async function logEvent(
   return { stored: true };
 }
 
+/**
+ * Download audit trail: order id + a salted IP hash (raw IPs are never
+ * stored). Writes to `download_log` (see supabase/schema.sql). Degrades to a
+ * console line when Supabase is unset or the table has not been created yet.
+ * The legacy `download_events` table is not used — it requires an
+ * `entitlement_id` this app never produces.
+ */
 export async function logDownload(
   orderId: string | null,
   ipHash: string,
@@ -236,10 +243,10 @@ export async function logDownload(
   const db = client();
   if (!db) return { stored: false };
   const { error } = await db
-    .from("download_events")
-    .insert({ kind: "zip-serve" });
+    .from("download_log")
+    .insert({ order_id: orderId, ip_hash: ipHash });
   if (error) {
-    if (!/entitlement_id|null/i.test(error.message)) {
+    if (!/schema cache|table|column/i.test(error.message)) {
       console.warn("[download-log] insert failed:", error.message);
     }
     return { stored: false };
