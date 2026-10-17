@@ -11,13 +11,17 @@
  */
 
 /**
- * Customers served before/outside this storefront. Owner-declared.
+ * Customers served to date. Owner-declared.
  *
- * Raise this only when the number is genuinely higher, and only by an amount
- * you can evidence. It is rounded down on display, so understating costs
- * nothing.
+ * This is the floor the site starts from. Orders recorded on this storefront
+ * are added on top of it (see social-proof.ts), so the displayed figure rises
+ * on its own as the shop sells.
+ *
+ * Raise it only when the real number is genuinely higher, and only by an
+ * amount you can evidence from your own records. It is rounded down on
+ * display, so understating costs you nothing.
  */
-export const OFFSTORE_CUSTOMERS = 200;
+export const DECLARED_CUSTOMERS = 200;
 
 /**
  * Below this many real buyers we do not show faces even if some are supplied —
