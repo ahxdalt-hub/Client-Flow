@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Container, Divider } from "@/components/ui";
 import { CONTACT } from "@/lib/pricing";
+import { breadcrumbJsonLd, jsonLd } from "@/lib/structured-data";
 
 export const LEGAL_BASE_PATHS = [
   "/privacy",
@@ -20,8 +21,14 @@ export function LegalShell({
   crumbs: { href: string; label: string }[];
   children: React.ReactNode;
 }) {
+  const trail = [{ name: "Home", path: "/" }, ...crumbs.map((c) => ({ name: c.label, path: c.href }))];
+
   return (
     <div className="border-b border-line">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd(trail)) }}
+      />
       <Container className="py-16 md:py-24">
         <div className="mx-auto max-w-2xl">
           <nav aria-label="Breadcrumb" className="mb-8 text-[0.82rem] text-muted">

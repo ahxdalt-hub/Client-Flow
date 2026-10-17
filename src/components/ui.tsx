@@ -54,12 +54,18 @@ export function SectionHeading({
   title,
   description,
   align = "left",
+  as: Heading = "h2",
   className,
 }: {
   eyebrow?: string;
   title: ReactNode;
   description?: ReactNode;
   align?: "left" | "center";
+  /**
+   * Heading level. Defaults to `h2` for in-page sections; standalone pages
+   * (e.g. /faq) pass `h1` so the document has exactly one top-level heading.
+   */
+  as?: "h1" | "h2";
   className?: string;
 }) {
   return (
@@ -71,9 +77,9 @@ export function SectionHeading({
       )}
     >
       {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-      <h2 className="display text-[clamp(1.9rem,4vw,2.9rem)] text-ink">
+      <Heading className="display text-[clamp(1.9rem,4vw,2.9rem)] text-ink">
         {title}
-      </h2>
+      </Heading>
       {description ? (
         <p className="mt-4 text-[1.05rem] leading-relaxed text-muted">
           {description}

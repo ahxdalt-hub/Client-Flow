@@ -30,6 +30,29 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  poweredByHeader: false,
+  /**
+   * Response hardening. HSTS and nosniff already come from Cloudflare; these
+   * add the ones the zone does not set. Keep the list conservative — a strict
+   * Content Security Policy needs nonces for the inline JSON-LD and the
+   * pre-paint script, and is a separate piece of work.
+   */
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

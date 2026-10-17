@@ -38,8 +38,10 @@ export default function TermsPage() {
 
       <h2>Updates</h2>
       <p>
-        Your purchase includes future versions of this kit. Updated content
-        is made available through your (or a reissued) download link.
+        This is a one-time purchase, not a subscription. We do not promise
+        ongoing updates or a release schedule; the files you download are yours
+        to keep. Your order page stays bookmarkable and continues to serve those
+        files, and the recovery page can reissue access if a link stops working.
       </p>
 
       <h2>Refunds</h2>

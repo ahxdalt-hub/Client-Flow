@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
+
 import { Container, ButtonLink } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import { Aurora, GridField } from "@/components/art/ambient";
+
+export const metadata: Metadata = {
+  title: "Page not found",
+  // A 404 must never be indexed, and the error page carries no useful content.
+  robots: { index: false, follow: true },
+};
 
 export default function NotFound() {
   return (
@@ -20,7 +28,7 @@ export default function NotFound() {
             </h1>
             <p className="mt-4 text-[0.95rem] leading-relaxed text-muted">
               The page you had in mind may have moved — or never existed. Here
-              are two routes that always work.
+              are a few routes that always work.
             </p>
           </Reveal>
 
@@ -34,6 +42,9 @@ export default function NotFound() {
             </ButtonLink>
             <ButtonLink href="/sample" variant="ghost" size="lg">
               Get the free sample
+            </ButtonLink>
+            <ButtonLink href="/blog" variant="ghost" size="lg">
+              Read the guides
             </ButtonLink>
           </Reveal>
         </div>

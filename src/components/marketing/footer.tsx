@@ -20,6 +20,28 @@ const COLUMNS: {
     ],
   },
   {
+    title: "Guides",
+    links: [
+      { href: "/blog", label: "All guides" },
+      {
+        href: "/blog/how-to-find-clients-as-a-freelancer-in-india",
+        label: "Finding clients in India",
+      },
+      {
+        href: "/blog/cold-email-templates-for-freelancers",
+        label: "Cold email templates",
+      },
+      {
+        href: "/blog/how-to-follow-up-with-potential-clients",
+        label: "Follow-up system",
+      },
+      {
+        href: "/blog/freelance-lead-tracking-spreadsheet",
+        label: "Lead tracking sheet",
+      },
+    ],
+  },
+  {
     title: "Help",
     links: [
       { href: "/contact", label: "Support" },
@@ -45,12 +67,15 @@ export function Footer() {
       <Grain className="z-10" opacity={0.28} />
 
       <Container className="relative z-10 pt-16 md:pt-20">
-        <div className="grid gap-12 md:grid-cols-[1.5fr_repeat(3,1fr)] md:gap-8">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:gap-8">
           <div>
             <Logo />
             <p className="mt-4 max-w-xs text-[0.92rem] leading-relaxed text-muted">
               A practical client acquisition toolkit for India&apos;s freelancers
               and small studios. Built to be used, not admired.
+            </p>
+            <p className="mt-4 max-w-xs text-[0.8rem] leading-relaxed text-muted/80">
+              ClientFlow is an independent digital product by Caelmont.
             </p>
           </div>
 

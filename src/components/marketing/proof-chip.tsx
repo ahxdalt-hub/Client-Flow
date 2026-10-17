@@ -76,7 +76,7 @@ export function ProofChip({
               {SCRIPT_TOTAL} templates &amp; scripts · {FILE_COUNT} files
             </span>
             <span className="block text-[0.66rem] text-muted">
-              {HANDBOOK_PAGES}-page handbook · free updates forever
+              {HANDBOOK_PAGES}-page handbook · yours to keep
             </span>
           </>
         )}

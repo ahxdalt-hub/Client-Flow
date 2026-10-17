@@ -16,10 +16,12 @@ import { Reveal, Spotlight } from "@/components/motion";
 import { SITE } from "@/config/site";
 import { activePrice, PRICING, PRODUCT } from "@/lib/pricing";
 import { FILE_COUNT, HANDBOOK_PAGES, INCLUDED_FILES } from "@/lib/product-content";
+import { jsonLd } from "@/lib/structured-data";
 
 export const metadata: Metadata = {
-  title: "ClientFlow Outreach Kit — client acquisition templates for Indian freelancers",
-  description: `Cold email templates, DM scripts, follow-up sequences, proposals and pricing tools built for freelance designers, developers, SEOs, social media managers and agencies in India. ₹${activePrice()} introductory price.`,
+  title: "Freelance Outreach Templates & Lead Tracker | ClientFlow",
+  description:
+    "Cold email templates, DM scripts, follow-ups, editable proposals and a lead tracker — the client outreach kit for Indian freelancers. ₹299 one-time payment.",
   alternates: { canonical: "/" },
 };
 
@@ -41,9 +43,12 @@ function productJsonLd() {
     brand: { "@type": "Brand", name: "ClientFlow" },
     category: "Business & Productivity Software",
     image: `${url}/opengraph-image`,
+    // The homepage is the product page: it states the price and links to buy,
+    // and unlike /checkout it is indexable — so it is the URL to point at.
+    url,
     offers: {
       "@type": "Offer",
-      url: `${url}/checkout`,
+      url,
       price: String(activePrice()),
       priceCurrency: PRICING.currency,
       availability: "https://schema.org/InStock",
@@ -76,7 +81,7 @@ export default function HomePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd()) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(productJsonLd()) }}
       />
       <Hero />
       <NicheBand />

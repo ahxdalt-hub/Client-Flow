@@ -6,6 +6,7 @@ import { Container, Section, Badge, ButtonLink } from "@/components/ui";
 import { Reveal } from "@/components/motion";
 import { Aurora } from "@/components/art/ambient";
 import { activePrice } from "@/lib/pricing";
+import { breadcrumbJsonLd, jsonLd } from "@/lib/structured-data";
 
 export const metadata: Metadata = {
   title: "Free sample — read a full template first",
@@ -32,6 +33,17 @@ const WHATS_IN_IT = [
 export default function SamplePage() {
   return (
     <div className="relative isolate overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLd(
+            breadcrumbJsonLd([
+              { name: "Home", path: "/" },
+              { name: "Free sample", path: "/sample" },
+            ]),
+          ),
+        }}
+      />
       <Aurora className="z-0" />
       <Container className="relative z-10 py-20 md:py-28">
       <nav aria-label="Breadcrumb" className="mb-10 text-[0.82rem] text-muted">

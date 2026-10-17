@@ -28,7 +28,7 @@ export const FAQS = [
   },
   {
     q: "Will I get updates?",
-    a: "Yes. Every future version of the kit is included free. When we improve templates or add a module, your download link keeps you current.",
+    a: "There's no fixed release schedule, so we don't promise ongoing updates — what you download is yours to keep. Your order page stays bookmarkable and the download link keeps working; if it ever stops, the recovery page reissues it.",
   },
   {
     q: "Can my agency team share the files?",

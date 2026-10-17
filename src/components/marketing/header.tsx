@@ -13,6 +13,7 @@ import { track } from "@/lib/analytics-client";
 const NAV = [
   { href: "/#inside", label: "What's inside" },
   { href: "/sample", label: "Free sample" },
+  { href: "/blog", label: "Guides" },
   { href: "/contact", label: "Support" },
 ];
 

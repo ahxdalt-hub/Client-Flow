@@ -94,7 +94,7 @@ export async function Hero() {
 
             <Reveal variant="up" delay={860} y={10} className="mt-5">
               <p className="text-[0.82rem] text-muted">
-                One-time payment · no subscription · free updates forever
+                One-time payment · no subscription · the files are yours to keep
               </p>
             </Reveal>
 

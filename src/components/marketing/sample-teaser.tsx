@@ -285,7 +285,7 @@ export function SampleTeaser() {
                   ) : null}
                 </p>
                 <p className="mt-2 text-[0.82rem] text-muted">
-                  One-time payment · no subscription · free updates forever
+                  One-time payment · no subscription · the files are yours to keep
                 </p>
 
                 <ButtonLink

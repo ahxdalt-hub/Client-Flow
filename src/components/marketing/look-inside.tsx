@@ -292,8 +292,8 @@ export function LookInside() {
                 Own the whole system for ₹{activePrice()}.
               </p>
               <p className="mt-3 text-[0.86rem] leading-relaxed text-ivory/75">
-                Instant access, free future updates, and a full refund if
-                anything on our side goes wrong.
+                Instant access, the files are yours to keep, and a full refund
+                if anything on our side goes wrong.
               </p>
               <ButtonLink href="/checkout" variant="primary" size="lg" className="mt-7 w-full">
                 Get the kit — ₹{activePrice()}

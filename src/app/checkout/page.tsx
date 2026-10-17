@@ -39,7 +39,7 @@ export default function CheckoutPage() {
                 </h2>
                 <p className="mt-1 text-[0.87rem] leading-relaxed text-muted">
                   {MODULES.length} modules · {FILE_COUNT} files · {SCRIPT_TOTAL} templates, scripts &amp;
-                  proposals · free updates forever
+                  proposals · yours to keep
                 </p>
 
                 <ul className="mt-5 space-y-1.5 text-[0.84rem] text-muted">

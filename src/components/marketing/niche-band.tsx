@@ -153,7 +153,7 @@ const CONTENT_ITEMS: Item[] = [
   { label: "4-step follow-up system", icon: "checklist" },
   { label: "Lead tracker", icon: "table" },
   { label: "66-page handbook", icon: "book" },
-  { label: "Free updates forever", icon: "refresh" },
+  { label: "Yours to keep", icon: "bag" },
   { label: "Fully editable sources", icon: "layers" },
 ];
 

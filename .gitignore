@@ -60,3 +60,7 @@ cloudflare-env.d.ts
 # would hand the product away for free, bypassing checkout entirely.
 /assets/deliverables/
 /assets/product-assets/
+
+# Pre-optimisation copies of public/images, written by scripts/optimize-images.mjs.
+# Kept locally as a revert path; not source, so not committed.
+/assets/image-originals/

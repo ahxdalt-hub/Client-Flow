@@ -1,24 +1,32 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
+import { notFound } from "next/navigation";
 
 import { DOWNLOAD_TOKEN_TTL_SECONDS } from "@/lib/config";
 import { findOrderByRazorpayId, ORDER_STATUS_CREATED } from "@/lib/orders";
+import { RAZORPAY_ORDER_ID_RE } from "@/lib/razorpay-ids";
 import { createDownloadToken, verifyDownloadToken } from "@/lib/tokens";
 import { OrderSuccess } from "./order-success";
 
 export const metadata: Metadata = {
   title: "Your download is ready",
-  robots: { index: false },
+  robots: { index: false, follow: false },
 };
 
-export default function OrderPage({
+export default async function OrderPage({
   params,
   searchParams,
 }: {
   params: Promise<{ orderId: string }>;
   searchParams: Promise<{ t?: string | string[] }>;
 }) {
+  // Resolve the route param before the Suspense boundary so a malformed id
+  // returns a real HTTP 404 instead of a 200 "soft 404" page. Anything that
+  // cannot be a Razorpay order id is, by definition, not an order.
+  const { orderId } = await params;
+  if (!RAZORPAY_ORDER_ID_RE.test(orderId)) notFound();
+
   return (
     <div className="border-b border-line">
       <Suspense
