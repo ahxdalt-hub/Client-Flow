@@ -77,25 +77,12 @@ export function CheckoutForm() {
       });
       const data = (await res.json()) as {
         error?: string;
-        provider?: string;
-        checkoutUrl?: string;
         razorpayOrderId?: string;
         amount?: number;
         currency?: string;
         keyId?: string;
       };
-      if (!res.ok) {
-        throw new Error(data.error ?? "Could not start checkout.");
-      }
-
-      // Dodo Payments: hosted checkout — hand the buyer straight over to it.
-      if (data.checkoutUrl) {
-        setStep("paying");
-        window.location.assign(data.checkoutUrl);
-        return;
-      }
-
-      if (!data.razorpayOrderId || !data.keyId) {
+      if (!res.ok || !data.razorpayOrderId || !data.keyId) {
         throw new Error(data.error ?? "Could not start checkout.");
       }
 

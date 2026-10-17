@@ -25,11 +25,3 @@ export const DOWNLOAD_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 export const WEBSITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
-/**
- * Which payment provider new checkouts use. Read lazily: on Cloudflare Workers
- * the environment is bound per request, so a module-scope read would be empty.
- */
-export function paymentProvider(): string {
-  return (process.env.PAYMENT_PROVIDER ?? "razorpay").toLowerCase();
-}

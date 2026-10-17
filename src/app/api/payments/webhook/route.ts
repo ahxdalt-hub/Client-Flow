@@ -8,94 +8,10 @@ import {
 } from "@/lib/razorpay-signature";
 import {
   findOrderByRazorpayId,
-  findOrderByRazorpayPaymentId,
   markOrderPaid,
   revokeOrderAccess,
   logEvent,
 } from "@/lib/orders";
-import { paymentProvider } from "@/lib/config";
-import { verifyDodoWebhook } from "@/lib/dodo";
-
-/**
- * Dodo Payments webhook (Standard Webhooks signatures). Only ever fulfils on
- * `payment.succeeded`, and every path is idempotent via markOrderPaid's
- * created→paid transition.
- */
-async function handleDodoWebhook(request: Request, raw: string) {
-  const ok = verifyDodoWebhook({
-    rawBody: raw,
-    id: request.headers.get("webhook-id") ?? "",
-    timestamp: request.headers.get("webhook-timestamp") ?? "",
-    signature: request.headers.get("webhook-signature") ?? "",
-  });
-  if (!ok) {
-    console.warn("[webhook:dodo] invalid signature");
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-  }
-
-  let body: { type?: string; data?: Record<string, unknown> } | null = null;
-  try {
-    body = JSON.parse(raw) as { type?: string; data?: Record<string, unknown> };
-  } catch {
-    return NextResponse.json({ error: "Malformed payload" }, { status: 400 });
-  }
-
-  const type = body?.type ?? "";
-  const data = (body?.data ?? {}) as Record<string, unknown>;
-  const paymentId = typeof data.payment_id === "string" ? data.payment_id : "";
-  const metadata = (data.metadata ?? {}) as Record<string, string>;
-  const orderId = metadata.order_id ?? "";
-
-  try {
-    switch (type) {
-      case "payment.succeeded": {
-        if (!orderId) {
-          console.warn("[webhook:dodo] payment without order_id metadata", { paymentId });
-          return NextResponse.json({ ok: true, ignored: "no-order-id" });
-        }
-        const local = await findOrderByRazorpayId(orderId);
-        if (local?.status === "paid") {
-          return NextResponse.json({ ok: true, alreadyFulfilled: true });
-        }
-        await markOrderPaid({ razorpayOrderId: orderId, razorpayPaymentId: paymentId });
-        after(async () => {
-          await logEvent("purchase_webhook_fulfilled", { orderId, provider: "dodo" });
-        });
-        return NextResponse.json({ ok: true });
-      }
-
-      case "payment.failed":
-      case "payment.cancelled":
-        await logEvent("payment_failed", {
-          orderId: orderId || paymentId,
-          provider: "dodo",
-          type,
-        });
-        return NextResponse.json({ ok: true, ignored: type });
-
-      case "refund.succeeded": {
-        let target = orderId;
-        if (!target && paymentId) {
-          const row = await findOrderByRazorpayPaymentId(paymentId);
-          target = row?.provider_order_id ?? "";
-        }
-        if (!target) {
-          return NextResponse.json({ ok: true, ignored: "refund-without-order" });
-        }
-        await revokeOrderAccess(target);
-        await logEvent("access_revoked", { orderId: target, paymentId, reason: "refund" });
-        return NextResponse.json({ ok: true });
-      }
-
-      default:
-        return NextResponse.json({ ok: true, ignored: type || "unknown" });
-    }
-  } catch (error) {
-    console.error("[webhook:dodo] fulfilment failed:", error);
-    // 5xx makes Dodo retry; retries are idempotent above.
-    return NextResponse.json({ error: "Fulfilment failed" }, { status: 500 });
-  }
-}
 
 /**
  * Razorpay webhook — the authoritative fallback for buyers who paid but
@@ -120,10 +36,6 @@ export async function POST(request: Request) {
   }
 
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-  if (paymentProvider() === "dodo") {
-    return handleDodoWebhook(request, raw);
-  }
-
   if (!secret) {
     return NextResponse.json({ error: "Webhook not configured." }, { status: 503 });
   }
