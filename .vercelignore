@@ -1,0 +1,9 @@
+# Files Vercel CLI must not upload with a `vercel deploy` from this machine.
+# Env files especially: uploading .env.local would let a local test key leak
+# into a production build in place of the dashboard env vars.
+.env*
+.next
+node_modules
+*.log
+dist
+supabase/.temp
